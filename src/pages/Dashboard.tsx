@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import ApplicationTracker from '@/components/ApplicationTracker';
+import JobWebsiteTracker from '@/components/JobWebsiteTracker';
 import Header from '@/components/Header';
 import { Application } from '@/components/ApplicationTracker';
 
@@ -100,8 +101,9 @@ const Dashboard = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="animate-slide-up">
+                <div className="animate-slide-up space-y-10">
                   <ApplicationTracker />
+                  <JobWebsiteTracker />
                 </div>
               )}
             </div>
