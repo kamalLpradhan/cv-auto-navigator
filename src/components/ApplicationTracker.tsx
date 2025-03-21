@@ -16,6 +16,10 @@ export interface Application {
   status: 'Applied' | 'In Review' | 'Rejected' | 'Interview' | 'Offer' | 'Failed';
   autoApplied: boolean;
   message?: string;
+  position?: string;
+  contactEmail?: string;
+  contactLinkedIn?: string;
+  contactName?: string;
 }
 
 const ApplicationTracker = () => {

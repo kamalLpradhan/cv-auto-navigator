@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import ApplicationTracker from '@/components/ApplicationTracker';
 import Header from '@/components/Header';
+import { Application } from '@/components/ApplicationTracker';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -25,6 +26,49 @@ const Dashboard = () => {
     // Check if there are any applications
     const applications = localStorage.getItem('applications');
     if (applications && JSON.parse(applications).length > 0) {
+      setHasApplications(true);
+    } else {
+      // Add sample applications data for demonstration
+      const sampleApplications: Application[] = [
+        {
+          id: "app1",
+          jobId: "job1",
+          jobTitle: "Frontend Developer",
+          company: "TechCorp Inc.",
+          position: "Senior Frontend Engineer",
+          appliedDate: new Date().toISOString(),
+          status: "Applied",
+          autoApplied: true,
+          contactEmail: "hiring@techcorp.com",
+          contactName: "Sarah Johnson"
+        },
+        {
+          id: "app2",
+          jobId: "job2",
+          jobTitle: "React Developer",
+          company: "Digital Solutions Ltd",
+          position: "React Developer - Remote",
+          appliedDate: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
+          status: "In Review",
+          autoApplied: true,
+          contactLinkedIn: "https://linkedin.com/in/recruiter-profile",
+          contactName: "Michael Chang"
+        },
+        {
+          id: "app3",
+          jobId: "job3",
+          jobTitle: "Full Stack Engineer",
+          company: "Startup Innovations",
+          position: "Full Stack Javascript Developer",
+          appliedDate: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 days ago
+          status: "Failed",
+          autoApplied: false,
+          message: "Application requires additional assessment test",
+          contactEmail: "recruiting@startup-innovations.co"
+        }
+      ];
+      
+      localStorage.setItem('applications', JSON.stringify(sampleApplications));
       setHasApplications(true);
     }
   }, [toast]);
