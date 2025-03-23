@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, BriefcaseBusiness, MapPin, Filter, CheckCircle, AlertCircle } from 'lucide-react';
+import { Search, BriefcaseBusiness, MapPin, Filter, CheckCircle, AlertCircle, Globe } from 'lucide-react';
 import { applyToJob } from '@/utils/applicationService';
 
 // Job types for the interface
@@ -21,6 +21,7 @@ interface Job {
   skills: string[];
   postedDate: string;
   canAutoApply: boolean;
+  source?: string;
 }
 
 const JobSearch = () => {
@@ -32,7 +33,7 @@ const JobSearch = () => {
   const [appliedJobs, setAppliedJobs] = useState<Record<string, { success: boolean; message?: string }>>({});
   const { toast } = useToast();
 
-  // Demo jobs data
+  // Demo jobs data, including Google Jobs
   const mockJobs: Job[] = [
     {
       id: '1',
@@ -69,6 +70,59 @@ const JobSearch = () => {
       skills: ['Node.js', 'MongoDB', 'Express', 'REST APIs'],
       postedDate: '2023-07-22',
       canAutoApply: true
+    },
+    // Google Jobs
+    {
+      id: 'g1',
+      title: 'Senior Software Engineer',
+      company: 'Google',
+      location: 'Mountain View, CA',
+      type: 'Full-time',
+      description: 'Join Google as a Senior Software Engineer to work on cutting-edge technology projects.',
+      requirements: ['5+ years of programming experience', 'Strong algorithms and data structures knowledge', 'Experience with distributed systems'],
+      skills: ['Java', 'Python', 'C++', 'Distributed Systems', 'Cloud Computing'],
+      postedDate: '2023-08-01',
+      canAutoApply: true,
+      source: 'Google Jobs'
+    },
+    {
+      id: 'g2',
+      title: 'Product Manager',
+      company: 'Google',
+      location: 'New York, NY',
+      type: 'Full-time',
+      description: 'Lead product development initiatives at Google, working with cross-functional teams to deliver innovative solutions.',
+      requirements: ['3+ years of product management experience', 'Technical background', 'Experience with data-driven decision making'],
+      skills: ['Product Management', 'Agile', 'User Research', 'Data Analysis'],
+      postedDate: '2023-08-05',
+      canAutoApply: true,
+      source: 'Google Jobs'
+    },
+    {
+      id: 'g3',
+      title: 'UX Researcher',
+      company: 'Google',
+      location: 'Seattle, WA',
+      type: 'Full-time',
+      description: 'Conduct user research to inform the design and development of Google products.',
+      requirements: ['Experience with qualitative and quantitative research methods', 'Excellent communication skills', 'Ability to translate research findings into actionable insights'],
+      skills: ['User Research', 'Data Analysis', 'Usability Testing', 'Survey Design'],
+      postedDate: '2023-08-10',
+      canAutoApply: false,
+      source: 'Google Jobs'
+    },
+    {
+      id: 'g4',
+      title: 'Cloud Solutions Architect',
+      company: 'Google Cloud',
+      location: 'Remote',
+      type: 'Full-time',
+      description: 'Help customers leverage Google Cloud Platform to solve complex business challenges.',
+      requirements: ['Cloud architecture experience', 'Programming skills', 'Customer-facing experience'],
+      skills: ['Google Cloud Platform', 'Kubernetes', 'Cloud Architecture', 'Docker'],
+      postedDate: '2023-08-15',
+      canAutoApply: true,
+      source: 'Google Jobs'
     }
   ];
 
@@ -227,6 +281,13 @@ const JobSearch = () => {
                         <span className="w-1 h-1 rounded-full bg-muted-foreground"></span>
                         <MapPin size={15} />
                         <span>{job.location}</span>
+                        {job.source && (
+                          <>
+                            <span className="w-1 h-1 rounded-full bg-muted-foreground"></span>
+                            <Globe size={15} />
+                            <span>{job.source}</span>
+                          </>
+                        )}
                       </div>
                       
                       <h3 className="text-xl font-medium">{job.title}</h3>
@@ -245,6 +306,12 @@ const JobSearch = () => {
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                             <AlertCircle size={12} className="mr-1" />
                             Manual Application
+                          </span>
+                        )}
+                        
+                        {job.source === 'Google Jobs' && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                            Google Jobs
                           </span>
                         )}
                       </div>
