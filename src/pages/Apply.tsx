@@ -3,28 +3,81 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { Progress } from "@/components/ui/progress";
 import JobSearch from "@/components/JobSearch";
 import Header from "@/components/Header";
+import { CircleCheck, FileWarning } from "lucide-react";
 
 const Apply = () => {
   const navigate = useNavigate();
   const [isCVUploaded, setIsCVUploaded] = useState(false);
+  const [cvCheckInProgress, setCvCheckInProgress] = useState(true);
+  const [cvStatus, setCvStatus] = useState<'checking' | 'valid' | 'invalid'>('checking');
+  const [cvDetails, setCvDetails] = useState<any>(null);
   const { toast } = useToast();
   
   useEffect(() => {
     // Check if CV is uploaded
-    const cv = localStorage.getItem('cv');
-    if (!cv) {
-      toast({
-        title: "No CV Found",
-        description: "Please upload your CV before applying to jobs",
-        variant: "destructive",
-      });
-      setIsCVUploaded(false);
-    } else {
-      setIsCVUploaded(true);
-    }
+    const checkCV = async () => {
+      setCvCheckInProgress(true);
+      setCvStatus('checking');
+      
+      // Simulate API delay for CV validation
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      const cv = localStorage.getItem('cv');
+      if (!cv) {
+        toast({
+          title: "No CV Found",
+          description: "Please upload your CV before applying to jobs",
+          variant: "destructive",
+        });
+        setCvStatus('invalid');
+        setIsCVUploaded(false);
+      } else {
+        try {
+          const cvData = JSON.parse(cv);
+          setCvDetails(cvData);
+          
+          if (!cvData.name || !cvData.uploadedAt) {
+            throw new Error("Invalid CV data");
+          }
+          
+          // CV data is valid
+          setCvStatus('valid');
+          setIsCVUploaded(true);
+          toast({
+            title: "CV Ready",
+            description: "Your CV is ready for automatic applications",
+          });
+        } catch (error) {
+          console.error("Error parsing CV data:", error);
+          setCvStatus('invalid');
+          setIsCVUploaded(false);
+          toast({
+            title: "CV Data Error",
+            description: "Your CV data appears to be corrupted. Please re-upload.",
+            variant: "destructive",
+          });
+        }
+      }
+      
+      setCvCheckInProgress(false);
+    };
+    
+    checkCV();
   }, [toast]);
+  
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
   
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-slate-50 dark:from-background dark:to-background/70">
@@ -43,17 +96,48 @@ const Apply = () => {
                 </p>
               </div>
               
-              {!isCVUploaded ? (
+              {cvCheckInProgress ? (
+                <div className="max-w-md mx-auto py-12 animate-fade-in">
+                  <div className="space-y-4 text-center">
+                    <h3 className="text-lg font-medium">Checking your CV...</h3>
+                    <Progress value={50} className="w-full h-2" />
+                    <p className="text-sm text-muted-foreground">
+                      We're validating your CV for automatic applications
+                    </p>
+                  </div>
+                </div>
+              ) : cvStatus === 'invalid' ? (
                 <div className="text-center py-12 animate-fade-in">
-                  <p className="text-muted-foreground mb-6">
-                    You need to upload your CV before you can apply to jobs.
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 mb-6">
+                    <FileWarning className="h-8 w-8 text-red-600 dark:text-red-400" />
+                  </div>
+                  <p className="text-xl font-medium mb-3">
+                    CV Not Found or Invalid
                   </p>
-                  <Button onClick={() => navigate('/upload')}>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    You need to upload a valid CV before you can apply to jobs. Our system will use your CV data to automatically apply to compatible positions.
+                  </p>
+                  <Button onClick={() => navigate('/upload')} size="lg">
                     Upload Your CV
                   </Button>
                 </div>
               ) : (
-                <div className="animate-slide-up">
+                <div className="animate-slide-up space-y-8">
+                  <div className="max-w-4xl mx-auto bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-start gap-4">
+                    <CircleCheck className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="font-medium">CV Ready for Auto-Applications</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Your CV was uploaded on {cvDetails?.uploadedAt && formatDate(cvDetails.uploadedAt)}.
+                      </p>
+                      <div className="mt-3 flex gap-4">
+                        <Button variant="outline" size="sm" onClick={() => navigate('/upload')}>
+                          Update CV
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <JobSearch />
                 </div>
               )}

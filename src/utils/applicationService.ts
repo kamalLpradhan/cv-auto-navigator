@@ -17,20 +17,56 @@ interface Job {
 interface ApplicationResult {
   success: boolean;
   message: string;
+  position?: string;
+  contactEmail?: string;
+  contactName?: string;
+  contactLinkedIn?: string;
 }
 
-// Function to simulate applying to a job
+// Function to simulate applying to a job with CV data
 export const applyToJob = async (job: Job): Promise<ApplicationResult> => {
+  // Get the CV data from localStorage
+  const cvData = JSON.parse(localStorage.getItem('cv') || '{}');
+  
+  if (!cvData || !cvData.name) {
+    return {
+      success: false,
+      message: 'CV data is missing or invalid. Please upload your CV properly.',
+    };
+  }
+  
   // In a real application, this would make API calls to external job sites
   return new Promise((resolve) => {
-    // Simulate API delay
+    // Simulate API delay - more realistic timing (1.5-3.5 seconds)
+    const delay = 1500 + Math.floor(Math.random() * 2000);
+    
+    console.log(`Applying for ${job.title} at ${job.company} with CV: ${cvData.name}`);
+    
     setTimeout(() => {
       if (job.canAutoApply) {
-        // Simulate successful application
-        resolve({
-          success: true,
-          message: `Successfully applied to ${job.title} at ${job.company}. Your application has been submitted.`
-        });
+        // Generate dynamic contact information for successful applications
+        const contactInfo = generateContactInfo(job.company);
+        
+        // Check if CV skills match job requirements (simplified matching)
+        const skillMatch = checkSkillMatch(cvData, job);
+        
+        if (skillMatch.isMatch) {
+          // Successful application
+          resolve({
+            success: true,
+            message: `Successfully applied to ${job.title} at ${job.company}. Your application has been submitted.`,
+            position: job.title,
+            ...contactInfo
+          });
+        } else {
+          // Application with warnings
+          resolve({
+            success: true,
+            message: `Applied to ${job.title} at ${job.company}, but ${skillMatch.message}`,
+            position: job.title,
+            ...contactInfo
+          });
+        }
       } else {
         // Simulate failed application that requires manual intervention
         const reasons = [
@@ -44,13 +80,88 @@ export const applyToJob = async (job: Job): Promise<ApplicationResult> => {
         // Randomly select a reason
         const reason = reasons[Math.floor(Math.random() * reasons.length)];
         
+        // Generate partial contact info for failed applications
+        const partialContactInfo = {
+          contactName: generateContactName(job.company),
+          contactLinkedIn: `linkedin.com/in/${generateLinkedInUsername(job.company)}`
+        };
+        
         resolve({
           success: false,
-          message: `Unable to auto-apply for this position. Reason: ${reason}`
+          message: `Unable to auto-apply for this position. Reason: ${reason}`,
+          position: job.title,
+          ...partialContactInfo
         });
       }
-    }, 1500);
+    }, delay);
   });
+};
+
+// Helper function to generate realistic contact information
+const generateContactInfo = (company: string) => {
+  const firstName = ['John', 'Sarah', 'Michael', 'Emma', 'David', 'Jessica', 'Robert', 'Jennifer'][Math.floor(Math.random() * 8)];
+  const lastName = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis'][Math.floor(Math.random() * 8)];
+  const name = `${firstName} ${lastName}`;
+  const domain = company.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
+  const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${domain}`;
+  const linkedInUsername = `${firstName.toLowerCase()}-${lastName.toLowerCase()}-${Math.floor(Math.random() * 1000)}`;
+  
+  return {
+    contactName: name,
+    contactEmail: email,
+    contactLinkedIn: `linkedin.com/in/${linkedInUsername}`
+  };
+};
+
+// Helper function to generate contact name
+const generateContactName = (company: string) => {
+  const firstName = ['John', 'Sarah', 'Michael', 'Emma', 'David', 'Jessica', 'Robert', 'Jennifer'][Math.floor(Math.random() * 8)];
+  const lastName = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis'][Math.floor(Math.random() * 8)];
+  return `${firstName} ${lastName}`;
+};
+
+// Helper function to generate LinkedIn username
+const generateLinkedInUsername = (company: string) => {
+  const firstName = ['john', 'sarah', 'michael', 'emma', 'david', 'jessica', 'robert', 'jennifer'][Math.floor(Math.random() * 8)];
+  const lastName = ['smith', 'johnson', 'williams', 'brown', 'jones', 'garcia', 'miller', 'davis'][Math.floor(Math.random() * 8)];
+  return `${firstName}-${lastName}-${Math.floor(Math.random() * 1000)}`;
+};
+
+// Function to check if CV skills match job requirements
+const checkSkillMatch = (cvData: any, job: Job) => {
+  // This would be more sophisticated in a real application
+  if (!cvData.skills || !Array.isArray(cvData.skills) || cvData.skills.length === 0) {
+    return { 
+      isMatch: false, 
+      message: 'your CV does not have any skills listed. Consider updating your CV with relevant skills.'
+    };
+  }
+  
+  // Convert skill arrays to lowercase for case-insensitive matching
+  const cvSkills = (cvData.skills || []).map((skill: string) => skill.toLowerCase());
+  const jobSkills = (job.skills || []).map(skill => skill.toLowerCase());
+  
+  // Find matching skills
+  const matchingSkills = jobSkills.filter(skill => cvSkills.includes(skill));
+  
+  if (matchingSkills.length === 0) {
+    return { 
+      isMatch: false, 
+      message: 'your CV skills do not match any of the required skills for this position. Consider tailoring your CV.'
+    };
+  }
+  
+  if (matchingSkills.length < jobSkills.length / 2) {
+    return { 
+      isMatch: true, 
+      message: `your CV only matches ${matchingSkills.length} out of ${jobSkills.length} required skills. Consider adding more relevant experience.`
+    };
+  }
+  
+  return { 
+    isMatch: true, 
+    message: 'Great match! Your skills align well with this position.'
+  };
 };
 
 // Function to check application status (for future implementation)
