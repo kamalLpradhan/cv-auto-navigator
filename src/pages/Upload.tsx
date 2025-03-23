@@ -29,6 +29,9 @@ const Upload = () => {
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
                   Upload Your CV
                 </h1>
+                <p className="text-muted-foreground md:text-xl">
+                  Upload your CV once and use it to apply to multiple jobs automatically.
+                </p>
               </div>
               
               <div className="w-full max-w-md mx-auto mb-10 animate-slide-up">
