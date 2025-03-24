@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, FileCheck, Clock, X, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Search, FileCheck, Clock, X, CheckCircle, AlertTriangle, Globe } from 'lucide-react';
 import ApplicationCard from './ApplicationCard';
 
 export interface Application {
@@ -20,6 +20,8 @@ export interface Application {
   contactEmail?: string;
   contactLinkedIn?: string;
   contactName?: string;
+  source?: string;
+  sourceId?: string;
 }
 
 const ApplicationTracker = () => {
@@ -50,7 +52,8 @@ const ApplicationTracker = () => {
     if (searchTerm) {
       filtered = filtered.filter(app => 
         app.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.company.toLowerCase().includes(searchTerm.toLowerCase())
+        app.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (app.source && app.source.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
@@ -61,6 +64,8 @@ const ApplicationTracker = () => {
       filtered = filtered.filter(app => !app.autoApplied);
     } else if (activeTab === 'failed') {
       filtered = filtered.filter(app => app.status === 'Failed');
+    } else if (activeTab === 'google') {
+      filtered = filtered.filter(app => app.source === 'Google Jobs');
     }
     
     setFilteredApplications(filtered);
@@ -70,15 +75,16 @@ const ApplicationTracker = () => {
     const autoApplied = applications.filter(app => app.autoApplied).length;
     const manual = applications.filter(app => !app.autoApplied).length;
     const failed = applications.filter(app => app.status === 'Failed').length;
+    const google = applications.filter(app => app.source === 'Google Jobs').length;
     
-    return { autoApplied, manual, failed, total: applications.length };
+    return { autoApplied, manual, failed, google, total: applications.length };
   };
   
   const counts = getStatusCounts();
   
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card className="glass-panel transition-all duration-300 hover:shadow-md">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -102,6 +108,20 @@ const ApplicationTracker = () => {
               </div>
               <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                 <CheckCircle className="text-green-600 dark:text-green-400" size={22} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="glass-panel transition-all duration-300 hover:shadow-md">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Google Jobs</p>
+                <h3 className="text-3xl font-bold mt-1">{counts.google}</h3>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Globe className="text-blue-600 dark:text-blue-400" size={22} />
               </div>
             </div>
           </CardContent>
@@ -150,10 +170,11 @@ const ApplicationTracker = () => {
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
-              <TabsTrigger value="all">All Applications</TabsTrigger>
+              <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="auto">Auto-Applied</TabsTrigger>
-              <TabsTrigger value="manual">Manual Applications</TabsTrigger>
-              <TabsTrigger value="failed">Failed Applications</TabsTrigger>
+              <TabsTrigger value="manual">Manual</TabsTrigger>
+              <TabsTrigger value="google">Google Jobs</TabsTrigger>
+              <TabsTrigger value="failed">Failed</TabsTrigger>
             </TabsList>
             
             <TabsContent value={activeTab} className="mt-0">

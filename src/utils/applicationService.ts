@@ -1,4 +1,3 @@
-
 // Application service utility for handling job applications
 
 interface Job {
@@ -12,6 +11,9 @@ interface Job {
   skills: string[];
   postedDate: string;
   canAutoApply: boolean;
+  sourceId?: string;
+  source?: string;
+  applyUrl?: string;
 }
 
 interface ApplicationResult {
@@ -35,7 +37,23 @@ export const applyToJob = async (job: Job): Promise<ApplicationResult> => {
     };
   }
   
-  // In a real application, this would make API calls to external job sites
+  // Check if this is a Google job with external apply link
+  if (job.source === 'Google Jobs' && job.applyUrl) {
+    console.log(`Google Job - Opening external application URL: ${job.applyUrl}`);
+    
+    // In a real app, we would track this event and potentially open in a new tab
+    // For this simulation, we'll return a partial success
+    const contactInfo = generateContactInfo(job.company);
+    
+    return {
+      success: true,
+      message: `Application initiated for ${job.title} at ${job.company}. You've been redirected to the company's application page.`,
+      position: job.title,
+      ...contactInfo
+    };
+  }
+  
+  // Standard application simulation
   return new Promise((resolve) => {
     // Simulate API delay - more realistic timing (1.5-3.5 seconds)
     const delay = 1500 + Math.floor(Math.random() * 2000);
@@ -129,7 +147,6 @@ const generateLinkedInUsername = (company: string) => {
 
 // Function to check if CV skills match job requirements
 const checkSkillMatch = (cvData: any, job: Job) => {
-  // This would be more sophisticated in a real application
   if (!cvData.skills || !Array.isArray(cvData.skills) || cvData.skills.length === 0) {
     return { 
       isMatch: false, 
@@ -166,7 +183,6 @@ const checkSkillMatch = (cvData: any, job: Job) => {
 
 // Function to check application status (for future implementation)
 export const checkApplicationStatus = async (applicationId: string): Promise<string> => {
-  // This would check the status of a submitted application
   return new Promise((resolve) => {
     setTimeout(() => {
       const statuses = ['In Review', 'Rejected', 'Interview', 'Offer'];
@@ -178,7 +194,6 @@ export const checkApplicationStatus = async (applicationId: string): Promise<str
 
 // Function to parse and extract data from CV (for future implementation)
 export const parseCV = async (file: File): Promise<Record<string, any>> => {
-  // This would use an API to parse the CV and extract relevant data
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
@@ -204,4 +219,126 @@ export const parseCV = async (file: File): Promise<Record<string, any>> => {
       });
     }, 2000);
   });
+};
+
+// New function to fetch Google Jobs API data
+export const fetchGoogleJobs = async (searchTerm?: string, location?: string): Promise<Job[]> => {
+  console.log(`Fetching Google Jobs with searchTerm: ${searchTerm}, location: ${location}`);
+  
+  // In a real implementation, this would make an API call to Google Jobs or a proxy service
+  // For demo purposes, we'll simulate the API response
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1800 + Math.random() * 1200));
+  
+  // Generate some realistic Google Jobs data
+  const googleJobs: Job[] = [
+    {
+      id: 'g' + Math.random().toString(36).substring(2, 10),
+      title: 'Senior Software Engineer',
+      company: 'Google',
+      location: 'Mountain View, CA',
+      type: 'Full-time',
+      description: 'Join Google as a Senior Software Engineer to work on cutting-edge technology projects.',
+      requirements: ['5+ years of programming experience', 'Strong algorithms and data structures knowledge', 'Experience with distributed systems'],
+      skills: ['Java', 'Python', 'C++', 'Distributed Systems', 'Cloud Computing'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 14 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: true,
+      source: 'Google Jobs',
+      sourceId: 'google-12345',
+      applyUrl: 'https://careers.google.com/jobs/results/123456789/'
+    },
+    {
+      id: 'g' + Math.random().toString(36).substring(2, 10),
+      title: 'Product Manager',
+      company: 'Google',
+      location: 'New York, NY',
+      type: 'Full-time',
+      description: 'Lead product development initiatives at Google, working with cross-functional teams to deliver innovative solutions.',
+      requirements: ['3+ years of product management experience', 'Technical background', 'Experience with data-driven decision making'],
+      skills: ['Product Management', 'Agile', 'User Research', 'Data Analysis'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: true,
+      source: 'Google Jobs',
+      sourceId: 'google-23456',
+      applyUrl: 'https://careers.google.com/jobs/results/234567890/'
+    },
+    {
+      id: 'g' + Math.random().toString(36).substring(2, 10),
+      title: 'UX Researcher',
+      company: 'Google',
+      location: 'Seattle, WA',
+      type: 'Full-time',
+      description: 'Conduct user research to inform the design and development of Google products.',
+      requirements: ['Experience with qualitative and quantitative research methods', 'Excellent communication skills', 'Ability to translate research findings into actionable insights'],
+      skills: ['User Research', 'Data Analysis', 'Usability Testing', 'Survey Design'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 5 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: false,
+      source: 'Google Jobs',
+      sourceId: 'google-34567',
+      applyUrl: 'https://careers.google.com/jobs/results/345678901/'
+    },
+    {
+      id: 'g' + Math.random().toString(36).substring(2, 10),
+      title: 'Cloud Solutions Architect',
+      company: 'Google Cloud',
+      location: 'Remote',
+      type: 'Full-time',
+      description: 'Help customers leverage Google Cloud Platform to solve complex business challenges.',
+      requirements: ['Cloud architecture experience', 'Programming skills', 'Customer-facing experience'],
+      skills: ['Google Cloud Platform', 'Kubernetes', 'Cloud Architecture', 'Docker'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 3 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: true,
+      source: 'Google Jobs',
+      sourceId: 'google-45678',
+      applyUrl: 'https://careers.google.com/jobs/results/456789012/'
+    },
+    {
+      id: 'g' + Math.random().toString(36).substring(2, 10),
+      title: 'Data Scientist',
+      company: 'Google',
+      location: 'Cambridge, MA',
+      type: 'Full-time',
+      description: 'Apply machine learning and statistical modeling to solve complex business problems.',
+      requirements: ['Advanced degree in Computer Science, Statistics, or related field', 'Experience with machine learning algorithms', 'Programming skills in Python or R'],
+      skills: ['Machine Learning', 'Python', 'TensorFlow', 'Data Analysis', 'Statistics'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 10 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: true,
+      source: 'Google Jobs',
+      sourceId: 'google-56789',
+      applyUrl: 'https://careers.google.com/jobs/results/567890123/'
+    }
+  ];
+  
+  // Filter jobs based on search criteria
+  let filteredJobs = [...googleJobs];
+  
+  if (searchTerm) {
+    const searchTermLower = searchTerm.toLowerCase();
+    filteredJobs = filteredJobs.filter(job => 
+      job.title.toLowerCase().includes(searchTermLower) || 
+      job.company.toLowerCase().includes(searchTermLower) ||
+      job.skills.some(skill => skill.toLowerCase().includes(searchTermLower))
+    );
+  }
+  
+  if (location) {
+    const locationLower = location.toLowerCase();
+    filteredJobs = filteredJobs.filter(job => 
+      job.location.toLowerCase().includes(locationLower)
+    );
+  }
+  
+  return filteredJobs;
+};
+
+// New function to fetch jobs from multiple sources
+export const fetchJobs = async (searchTerm?: string, location?: string): Promise<Job[]> => {
+  // Fetch Google Jobs
+  const googleJobs = await fetchGoogleJobs(searchTerm, location);
+  
+  // In a real implementation, you would fetch from multiple job sources
+  // and combine the results
+  
+  return googleJobs;
 };

@@ -1,13 +1,13 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast";
-import { Search, BriefcaseBusiness, MapPin, Filter, CheckCircle, AlertCircle, Globe } from 'lucide-react';
-import { applyToJob } from '@/utils/applicationService';
+import { useToast } from "@/hooks/use-toast";
+import { Search, BriefcaseBusiness, MapPin, Filter, CheckCircle, AlertCircle, Globe, Loader2 } from 'lucide-react';
+import { applyToJob, fetchGoogleJobs, fetchJobs } from '@/utils/applicationService';
 
 // Job types for the interface
 interface Job {
@@ -22,6 +22,8 @@ interface Job {
   postedDate: string;
   canAutoApply: boolean;
   source?: string;
+  sourceId?: string;
+  applyUrl?: string;
 }
 
 const JobSearch = () => {
@@ -31,9 +33,10 @@ const JobSearch = () => {
   const [searchResults, setSearchResults] = useState<Job[]>([]);
   const [isApplying, setIsApplying] = useState<Record<string, boolean>>({});
   const [appliedJobs, setAppliedJobs] = useState<Record<string, { success: boolean; message?: string }>>({});
+  const [isLoadingGoogleJobs, setIsLoadingGoogleJobs] = useState(false);
   const { toast } = useToast();
 
-  // Demo jobs data, including Google Jobs
+  // Demo jobs data
   const mockJobs: Job[] = [
     {
       id: '1',
@@ -70,69 +73,41 @@ const JobSearch = () => {
       skills: ['Node.js', 'MongoDB', 'Express', 'REST APIs'],
       postedDate: '2023-07-22',
       canAutoApply: true
-    },
-    // Google Jobs
-    {
-      id: 'g1',
-      title: 'Senior Software Engineer',
-      company: 'Google',
-      location: 'Mountain View, CA',
-      type: 'Full-time',
-      description: 'Join Google as a Senior Software Engineer to work on cutting-edge technology projects.',
-      requirements: ['5+ years of programming experience', 'Strong algorithms and data structures knowledge', 'Experience with distributed systems'],
-      skills: ['Java', 'Python', 'C++', 'Distributed Systems', 'Cloud Computing'],
-      postedDate: '2023-08-01',
-      canAutoApply: true,
-      source: 'Google Jobs'
-    },
-    {
-      id: 'g2',
-      title: 'Product Manager',
-      company: 'Google',
-      location: 'New York, NY',
-      type: 'Full-time',
-      description: 'Lead product development initiatives at Google, working with cross-functional teams to deliver innovative solutions.',
-      requirements: ['3+ years of product management experience', 'Technical background', 'Experience with data-driven decision making'],
-      skills: ['Product Management', 'Agile', 'User Research', 'Data Analysis'],
-      postedDate: '2023-08-05',
-      canAutoApply: true,
-      source: 'Google Jobs'
-    },
-    {
-      id: 'g3',
-      title: 'UX Researcher',
-      company: 'Google',
-      location: 'Seattle, WA',
-      type: 'Full-time',
-      description: 'Conduct user research to inform the design and development of Google products.',
-      requirements: ['Experience with qualitative and quantitative research methods', 'Excellent communication skills', 'Ability to translate research findings into actionable insights'],
-      skills: ['User Research', 'Data Analysis', 'Usability Testing', 'Survey Design'],
-      postedDate: '2023-08-10',
-      canAutoApply: false,
-      source: 'Google Jobs'
-    },
-    {
-      id: 'g4',
-      title: 'Cloud Solutions Architect',
-      company: 'Google Cloud',
-      location: 'Remote',
-      type: 'Full-time',
-      description: 'Help customers leverage Google Cloud Platform to solve complex business challenges.',
-      requirements: ['Cloud architecture experience', 'Programming skills', 'Customer-facing experience'],
-      skills: ['Google Cloud Platform', 'Kubernetes', 'Cloud Architecture', 'Docker'],
-      postedDate: '2023-08-15',
-      canAutoApply: true,
-      source: 'Google Jobs'
     }
   ];
 
-  const handleSearch = () => {
+  // Load initial Google jobs on component mount
+  useEffect(() => {
+    const loadInitialGoogleJobs = async () => {
+      setIsLoadingGoogleJobs(true);
+      try {
+        const googleJobs = await fetchGoogleJobs();
+        setSearchResults([...mockJobs, ...googleJobs]);
+      } catch (error) {
+        console.error("Error fetching Google jobs:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load Google jobs. Please try again later.",
+          variant: "destructive",
+        });
+        setSearchResults(mockJobs);
+      } finally {
+        setIsLoadingGoogleJobs(false);
+      }
+    };
+
+    loadInitialGoogleJobs();
+  }, [toast]);
+
+  const handleSearch = async () => {
     setIsSearching(true);
     
-    // Simulate API search delay
-    setTimeout(() => {
-      // Filter jobs based on search criteria
-      const results = mockJobs.filter(job => {
+    try {
+      // Fetch Google jobs based on search criteria
+      const googleJobs = await fetchGoogleJobs(searchTerm, location);
+      
+      // Filter local mock jobs based on search criteria
+      const filteredMockJobs = mockJobs.filter(job => {
         const matchesSearchTerm = searchTerm === '' || 
           job.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
           job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -144,17 +119,28 @@ const JobSearch = () => {
         return matchesSearchTerm && matchesLocation;
       });
       
-      setSearchResults(results);
-      setIsSearching(false);
+      // Combine the results
+      const combinedResults = [...filteredMockJobs, ...googleJobs];
       
-      if (results.length === 0) {
+      setSearchResults(combinedResults);
+      
+      if (combinedResults.length === 0) {
         toast({
           title: "No jobs found",
           description: "Try adjusting your search criteria",
           variant: "default",
         });
       }
-    }, 1000);
+    } catch (error) {
+      console.error("Search error:", error);
+      toast({
+        title: "Search Error",
+        description: "An error occurred while searching for jobs. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleApply = async (job: Job) => {
@@ -167,6 +153,34 @@ const JobSearch = () => {
         description: "Please upload your CV before applying",
         variant: "destructive",
       });
+      return;
+    }
+    
+    // Special handling for Google Jobs with external apply links
+    if (job.source === 'Google Jobs' && job.applyUrl) {
+      // In a real app, we would open the URL in a new tab
+      window.open(job.applyUrl, '_blank');
+      
+      // Save application to localStorage for tracking
+      const applications = JSON.parse(localStorage.getItem('applications') || '[]');
+      applications.push({
+        jobId: job.id,
+        jobTitle: job.title,
+        company: job.company,
+        appliedDate: new Date().toISOString(),
+        status: 'Applied',
+        autoApplied: false,
+        message: "Application initiated through external link",
+        source: job.source,
+        sourceId: job.sourceId
+      });
+      localStorage.setItem('applications', JSON.stringify(applications));
+      
+      toast({
+        title: "External Application",
+        description: `You've been redirected to apply for ${job.title} at ${job.company}`,
+      });
+      
       return;
     }
     
@@ -193,7 +207,12 @@ const JobSearch = () => {
         appliedDate: new Date().toISOString(),
         status: result.success ? 'Applied' : 'Failed',
         autoApplied: job.canAutoApply,
-        message: result.message
+        message: result.message,
+        source: job.source,
+        sourceId: job.sourceId,
+        contactName: result.contactName,
+        contactEmail: result.contactEmail,
+        contactLinkedIn: result.contactLinkedIn
       });
       localStorage.setItem('applications', JSON.stringify(applications));
       
@@ -260,12 +279,26 @@ const JobSearch = () => {
                 disabled={isSearching}
                 className="w-full h-10 md:w-auto"
               >
-                {isSearching ? 'Searching...' : 'Search Jobs'}
+                {isSearching ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                    Searching...
+                  </>
+                ) : 'Search Jobs'}
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+      
+      {isLoadingGoogleJobs && searchResults.length === 0 && (
+        <div className="text-center py-10 animate-fade-in">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">
+            Loading Google Jobs data...
+          </p>
+        </div>
+      )}
       
       {searchResults.length > 0 && (
         <div className="space-y-4 animate-fade-in">
@@ -331,7 +364,12 @@ const JobSearch = () => {
                         disabled={isApplying[job.id]}
                         className="mt-2 md:mt-0"
                       >
-                        {isApplying[job.id] ? 'Applying...' : 'Apply Now'}
+                        {isApplying[job.id] ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Applying...
+                          </>
+                        ) : 'Apply Now'}
                       </Button>
                     )}
                   </div>
@@ -359,7 +397,7 @@ const JobSearch = () => {
         </div>
       )}
       
-      {searchResults.length === 0 && searchTerm && !isSearching && (
+      {searchResults.length === 0 && searchTerm && !isSearching && !isLoadingGoogleJobs && (
         <div className="text-center py-12 animate-fade-in">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-4">
             <Search className="text-muted-foreground" size={24} />
