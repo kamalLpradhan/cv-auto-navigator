@@ -14,8 +14,10 @@ import {
   ExternalLink,
   CheckCircle,
   BriefcaseBusiness,
-  Zap
+  Zap,
+  Linkedin
 } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
 
 export interface JobWebsite {
   id: string;
@@ -26,6 +28,7 @@ export interface JobWebsite {
   lastChecked?: string;
   newJobs?: number;
   appliedJobs?: number;
+  linkedInGroupUrl?: string;
 }
 
 const JobWebsiteTracker = () => {
@@ -34,8 +37,10 @@ const JobWebsiteTracker = () => {
   const [newWebsite, setNewWebsite] = useState({
     name: '',
     url: '',
-    position: ''
+    position: '',
+    linkedInGroupUrl: ''
   });
+  const { toast } = useToast();
   
   useEffect(() => {
     // Load tracked websites from localStorage or use sample data
@@ -54,7 +59,8 @@ const JobWebsiteTracker = () => {
           notifications: true,
           lastChecked: new Date().toISOString(),
           newJobs: 3,
-          appliedJobs: 2
+          appliedJobs: 2,
+          linkedInGroupUrl: "https://www.linkedin.com/groups/12345/"
         },
         {
           id: "site2",
@@ -103,7 +109,8 @@ const JobWebsiteTracker = () => {
       notifications: true,
       lastChecked: new Date().toISOString(),
       newJobs: 0,
-      appliedJobs: 0
+      appliedJobs: 0,
+      linkedInGroupUrl: newWebsite.linkedInGroupUrl || undefined
     };
     
     const updatedWebsites = [...jobWebsites, newSite];
@@ -111,8 +118,13 @@ const JobWebsiteTracker = () => {
     localStorage.setItem('jobWebsites', JSON.stringify(updatedWebsites));
     
     // Reset form
-    setNewWebsite({ name: '', url: '', position: '' });
+    setNewWebsite({ name: '', url: '', position: '', linkedInGroupUrl: '' });
     setShowAddForm(false);
+    
+    toast({
+      title: "Website Added",
+      description: `${newWebsite.name} has been added to your tracked job websites.`,
+    });
   };
   
   const handleAddPosition = (websiteId: string, position: string) => {
@@ -132,6 +144,28 @@ const JobWebsiteTracker = () => {
     localStorage.setItem('jobWebsites', JSON.stringify(updatedWebsites));
   };
   
+  const updateLinkedInGroup = (websiteId: string, url: string) => {
+    if (!url) return;
+    
+    const updatedWebsites = jobWebsites.map(site => {
+      if (site.id === websiteId) {
+        return {
+          ...site,
+          linkedInGroupUrl: url
+        };
+      }
+      return site;
+    });
+    
+    setJobWebsites(updatedWebsites);
+    localStorage.setItem('jobWebsites', JSON.stringify(updatedWebsites));
+    
+    toast({
+      title: "LinkedIn Group Added",
+      description: "LinkedIn group URL has been updated for this job website.",
+    });
+  };
+  
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Never';
     
@@ -146,6 +180,18 @@ const JobWebsiteTracker = () => {
     } catch (e) {
       return 'Invalid date';
     }
+  };
+  
+  const openLinkedInGroup = (url?: string) => {
+    if (!url) return;
+    
+    // Make sure the URL has the https prefix
+    let fullUrl = url;
+    if (!url.startsWith('http')) {
+      fullUrl = 'https://' + url;
+    }
+    
+    window.open(fullUrl, '_blank', 'noopener,noreferrer');
   };
   
   return (
@@ -175,7 +221,7 @@ const JobWebsiteTracker = () => {
           {showAddForm && (
             <div className="bg-muted/30 rounded-lg p-4 mb-6 animate-fade-in border border-border">
               <h3 className="font-medium mb-3">Add New Job Website</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="text-sm text-muted-foreground mb-1 block">Website Name</label>
                   <Input
@@ -198,6 +244,14 @@ const JobWebsiteTracker = () => {
                     placeholder="Frontend Developer, etc."
                     value={newWebsite.position}
                     onChange={(e) => setNewWebsite({...newWebsite, position: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1 block">LinkedIn Group URL (Optional)</label>
+                  <Input
+                    placeholder="https://linkedin.com/groups/..."
+                    value={newWebsite.linkedInGroupUrl}
+                    onChange={(e) => setNewWebsite({...newWebsite, linkedInGroupUrl: e.target.value})}
                   />
                 </div>
               </div>
@@ -238,6 +292,17 @@ const JobWebsiteTracker = () => {
                         >
                           <ExternalLink size={14} className="ml-1" />
                         </a>
+                        
+                        {website.linkedInGroupUrl && (
+                          <button
+                            onClick={() => openLinkedInGroup(website.linkedInGroupUrl)}
+                            className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 ml-2 text-sm"
+                            aria-label="Open LinkedIn Group"
+                          >
+                            <Linkedin size={14} />
+                            <span>LinkedIn Group</span>
+                          </button>
+                        )}
                       </div>
                       <div className="mt-1 text-sm text-muted-foreground">
                         Last checked: {formatDate(website.lastChecked)}
@@ -318,6 +383,23 @@ const JobWebsiteTracker = () => {
                       </div>
                     </div>
                   </div>
+                  
+                  {!website.linkedInGroupUrl && (
+                    <div className="mt-3 pt-2 border-t border-dashed border-border">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-blue-600 dark:text-blue-400 p-0 h-auto"
+                        onClick={() => {
+                          const url = prompt("Enter LinkedIn group URL for this job website");
+                          if (url) updateLinkedInGroup(website.id, url);
+                        }}
+                      >
+                        <Linkedin size={14} className="mr-1" />
+                        Add LinkedIn group
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

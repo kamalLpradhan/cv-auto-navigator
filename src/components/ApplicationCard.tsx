@@ -83,6 +83,17 @@ const ApplicationCard = ({ application }: ApplicationCardProps) => {
     }
   };
   
+  const handleLinkedInClick = (linkedInUrl: string) => {
+    // Make sure the URL has the https prefix
+    let url = linkedInUrl;
+    if (!url.startsWith('http')) {
+      url = 'https://' + url;
+    }
+    
+    // Open LinkedIn in a new tab
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+  
   return (
     <Card className="overflow-hidden card-hover">
       <CardContent className="p-0">
@@ -121,7 +132,7 @@ const ApplicationCard = ({ application }: ApplicationCardProps) => {
                 )}
               </div>
 
-              {/* Contact information section */}
+              {/* Contact information section with enhanced LinkedIn integration */}
               {(application.contactEmail || application.contactLinkedIn || application.contactName) && (
                 <div className="mt-3 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
                   <p className="text-xs text-muted-foreground font-medium mb-1">Hiring Contact:</p>
@@ -142,15 +153,14 @@ const ApplicationCard = ({ application }: ApplicationCardProps) => {
                       </a>
                     )}
                     {application.contactLinkedIn && (
-                      <a 
-                        href={application.contactLinkedIn}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button 
+                        onClick={() => handleLinkedInClick(application.contactLinkedIn!)}
                         className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                        aria-label={`View ${application.contactName || 'contact'} on LinkedIn`}
                       >
                         <Linkedin size={14} />
-                        <span>LinkedIn Profile</span>
-                      </a>
+                        <span>Connect on LinkedIn</span>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -194,7 +204,7 @@ const ApplicationCard = ({ application }: ApplicationCardProps) => {
                     <li>Check the company website directly</li>
                     <li>Try using a different browser</li>
                     <li>Make sure your CV is in a supported format</li>
-                    <li>Consider reaching out to the company via email</li>
+                    <li>Consider reaching out to the company via email or LinkedIn</li>
                   </ul>
                 </div>
               )}
