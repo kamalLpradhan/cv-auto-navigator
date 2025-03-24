@@ -231,32 +231,21 @@ export const fetchGoogleJobs = async (searchTerm?: string, location?: string): P
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1800 + Math.random() * 1200));
   
+  // Default search terms for Product Manager and Growth Manager positions if no search term is provided
+  const defaultSearchTerms = ['product manager', 'growth manager'];
+  const effectiveSearchTerm = searchTerm || defaultSearchTerms[Math.floor(Math.random() * defaultSearchTerms.length)];
+  
   // Generate some realistic Google Jobs data
-  const googleJobs: Job[] = [
+  let googleJobs: Job[] = [
     {
       id: 'g' + Math.random().toString(36).substring(2, 10),
-      title: 'Senior Software Engineer',
+      title: 'Senior Product Manager',
       company: 'Google',
       location: 'Mountain View, CA',
       type: 'Full-time',
-      description: 'Join Google as a Senior Software Engineer to work on cutting-edge technology projects.',
-      requirements: ['5+ years of programming experience', 'Strong algorithms and data structures knowledge', 'Experience with distributed systems'],
-      skills: ['Java', 'Python', 'C++', 'Distributed Systems', 'Cloud Computing'],
-      postedDate: new Date(Date.now() - Math.floor(Math.random() * 14 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
-      canAutoApply: true,
-      source: 'Google Jobs',
-      sourceId: 'google-12345',
-      applyUrl: 'https://careers.google.com/jobs/results/123456789/'
-    },
-    {
-      id: 'g' + Math.random().toString(36).substring(2, 10),
-      title: 'Product Manager',
-      company: 'Google',
-      location: 'New York, NY',
-      type: 'Full-time',
       description: 'Lead product development initiatives at Google, working with cross-functional teams to deliver innovative solutions.',
-      requirements: ['3+ years of product management experience', 'Technical background', 'Experience with data-driven decision making'],
-      skills: ['Product Management', 'Agile', 'User Research', 'Data Analysis'],
+      requirements: ['5+ years of product management experience', 'Technical background', 'Experience with data-driven decision making'],
+      skills: ['Product Management', 'Agile', 'User Research', 'Data Analysis', 'Roadmapping'],
       postedDate: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
       canAutoApply: true,
       source: 'Google Jobs',
@@ -265,50 +254,172 @@ export const fetchGoogleJobs = async (searchTerm?: string, location?: string): P
     },
     {
       id: 'g' + Math.random().toString(36).substring(2, 10),
-      title: 'UX Researcher',
-      company: 'Google',
+      title: 'Product Manager, AI Solutions',
+      company: 'Amazon',
       location: 'Seattle, WA',
       type: 'Full-time',
-      description: 'Conduct user research to inform the design and development of Google products.',
-      requirements: ['Experience with qualitative and quantitative research methods', 'Excellent communication skills', 'Ability to translate research findings into actionable insights'],
-      skills: ['User Research', 'Data Analysis', 'Usability Testing', 'Survey Design'],
+      description: 'Define and deliver AI-powered products that solve real customer problems at scale.',
+      requirements: ['3+ years of product management experience', 'Experience with machine learning or AI products', 'Strong analytical skills'],
+      skills: ['Product Management', 'AI/ML', 'Customer Development', 'Stakeholder Management', 'Data Analysis'],
       postedDate: new Date(Date.now() - Math.floor(Math.random() * 5 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
-      canAutoApply: false,
+      canAutoApply: true,
       source: 'Google Jobs',
       sourceId: 'google-34567',
-      applyUrl: 'https://careers.google.com/jobs/results/345678901/'
+      applyUrl: 'https://www.amazon.jobs/en/jobs/123456/'
     },
     {
       id: 'g' + Math.random().toString(36).substring(2, 10),
-      title: 'Cloud Solutions Architect',
-      company: 'Google Cloud',
-      location: 'Remote',
+      title: 'Growth Manager',
+      company: 'Meta',
+      location: 'New York, NY',
       type: 'Full-time',
-      description: 'Help customers leverage Google Cloud Platform to solve complex business challenges.',
-      requirements: ['Cloud architecture experience', 'Programming skills', 'Customer-facing experience'],
-      skills: ['Google Cloud Platform', 'Kubernetes', 'Cloud Architecture', 'Docker'],
+      description: 'Drive user acquisition and retention strategies to accelerate business growth.',
+      requirements: ['4+ years of growth marketing experience', 'Experience with A/B testing', 'Strong analytical mindset'],
+      skills: ['Growth Marketing', 'User Acquisition', 'A/B Testing', 'Data Analysis', 'Marketing Automation'],
       postedDate: new Date(Date.now() - Math.floor(Math.random() * 3 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
       canAutoApply: true,
       source: 'Google Jobs',
       sourceId: 'google-45678',
-      applyUrl: 'https://careers.google.com/jobs/results/456789012/'
+      applyUrl: 'https://www.metacareers.com/jobs/123456789/'
     },
     {
       id: 'g' + Math.random().toString(36).substring(2, 10),
-      title: 'Data Scientist',
-      company: 'Google',
-      location: 'Cambridge, MA',
+      title: 'Senior Growth Manager',
+      company: 'Microsoft',
+      location: 'Redmond, WA',
       type: 'Full-time',
-      description: 'Apply machine learning and statistical modeling to solve complex business problems.',
-      requirements: ['Advanced degree in Computer Science, Statistics, or related field', 'Experience with machine learning algorithms', 'Programming skills in Python or R'],
-      skills: ['Machine Learning', 'Python', 'TensorFlow', 'Data Analysis', 'Statistics'],
+      description: 'Lead growth initiatives to drive user acquisition, engagement, and retention across Microsoft products.',
+      requirements: ['5+ years in growth marketing', 'Experience scaling consumer products', 'Strong data analysis skills'],
+      skills: ['Growth Strategy', 'User Retention', 'Funnel Optimization', 'Marketing Analytics', 'CRM'],
       postedDate: new Date(Date.now() - Math.floor(Math.random() * 10 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
       canAutoApply: true,
       source: 'Google Jobs',
       sourceId: 'google-56789',
-      applyUrl: 'https://careers.google.com/jobs/results/567890123/'
+      applyUrl: 'https://careers.microsoft.com/job/123456/'
+    },
+    {
+      id: 'g' + Math.random().toString(36).substring(2, 10),
+      title: 'Technical Product Manager',
+      company: 'Apple',
+      location: 'Cupertino, CA',
+      type: 'Full-time',
+      description: 'Define and drive the product roadmap for technical products, working closely with engineering teams.',
+      requirements: ['3+ years of technical product management', 'Software development background', 'Experience with Agile methodologies'],
+      skills: ['Technical Product Management', 'Software Development', 'Agile', 'Requirements Gathering', 'Roadmapping'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 6 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: false,
+      source: 'Google Jobs',
+      sourceId: 'google-67890',
+      applyUrl: 'https://jobs.apple.com/en-us/details/123456/'
+    },
+    {
+      id: 'g' + Math.random().toString(36).substring(2, 10),
+      title: 'Product Manager, Remote',
+      company: 'Shopify',
+      location: 'Remote',
+      type: 'Full-time',
+      description: 'Help shape the future of commerce by leading product initiatives that empower entrepreneurs worldwide.',
+      requirements: ['3+ years of product management experience', 'Experience with e-commerce platforms', 'Strong communication skills'],
+      skills: ['Product Management', 'E-commerce', 'User Research', 'Stakeholder Management', 'Strategic Planning'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 4 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: true,
+      source: 'Google Jobs',
+      sourceId: 'google-78901',
+      applyUrl: 'https://www.shopify.com/careers/opportunities/123456/'
+    },
+    {
+      id: 'g' + Math.random().toString(36).substring(2, 10),
+      title: 'Growth Marketing Manager',
+      company: 'Twitter',
+      location: 'San Francisco, CA',
+      type: 'Full-time',
+      description: 'Lead user acquisition and retention strategies to drive platform growth and engagement.',
+      requirements: ['4+ years of growth marketing experience', 'Experience with social media platforms', 'Strong analytical skills'],
+      skills: ['Growth Marketing', 'User Acquisition', 'Social Media', 'Analytics', 'A/B Testing'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 8 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: true,
+      source: 'Google Jobs',
+      sourceId: 'google-89012',
+      applyUrl: 'https://careers.twitter.com/en/work-for-twitter/jobs/123456.html'
     }
   ];
+  
+  // Add more role-specific jobs based on search term
+  if (searchTerm) {
+    const searchTermLower = searchTerm.toLowerCase();
+    
+    // If searching specifically for product manager roles
+    if (searchTermLower.includes('product manager')) {
+      googleJobs.push(
+        {
+          id: 'g' + Math.random().toString(36).substring(2, 10),
+          title: 'Associate Product Manager',
+          company: 'LinkedIn',
+          location: 'Sunnyvale, CA',
+          type: 'Full-time',
+          description: 'Join LinkedIn's Product team to help shape the future of professional networking.',
+          requirements: ['1-3 years of product management experience', 'Strong analytical skills', 'Excellent communication abilities'],
+          skills: ['Product Management', 'User Research', 'Data Analysis', 'Agile', 'Prototyping'],
+          postedDate: new Date(Date.now() - Math.floor(Math.random() * 2 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+          canAutoApply: true,
+          source: 'Google Jobs',
+          sourceId: 'google-90123',
+          applyUrl: 'https://www.linkedin.com/jobs/view/123456/'
+        },
+        {
+          id: 'g' + Math.random().toString(36).substring(2, 10),
+          title: 'Senior Product Manager, Mobile',
+          company: 'Spotify',
+          location: 'New York, NY',
+          type: 'Full-time',
+          description: 'Lead the product strategy and execution for Spotify\'s mobile application features.',
+          requirements: ['5+ years of product management experience', 'Experience with mobile products', 'Music industry knowledge a plus'],
+          skills: ['Mobile Product Management', 'User Experience', 'A/B Testing', 'Agile', 'Roadmapping'],
+          postedDate: new Date(Date.now() - Math.floor(Math.random() * 5 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+          canAutoApply: true,
+          source: 'Google Jobs',
+          sourceId: 'google-01234',
+          applyUrl: 'https://www.spotifyjobs.com/job/123456/'
+        }
+      );
+    }
+    
+    // If searching specifically for growth manager roles
+    if (searchTermLower.includes('growth manager')) {
+      googleJobs.push(
+        {
+          id: 'g' + Math.random().toString(36).substring(2, 10),
+          title: 'Growth Marketing Manager',
+          company: 'Netflix',
+          location: 'Los Gatos, CA',
+          type: 'Full-time',
+          description: 'Drive subscriber growth through innovative marketing strategies and campaigns.',
+          requirements: ['4+ years of growth marketing experience', 'Experience with subscription businesses', 'Strong data analysis skills'],
+          skills: ['Growth Marketing', 'Subscription Models', 'Customer Acquisition', 'Retention Strategies', 'A/B Testing'],
+          postedDate: new Date(Date.now() - Math.floor(Math.random() * 3 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+          canAutoApply: true,
+          source: 'Google Jobs',
+          sourceId: 'google-12345',
+          applyUrl: 'https://jobs.netflix.com/jobs/123456/'
+        },
+        {
+          id: 'g' + Math.random().toString(36).substring(2, 10),
+          title: 'Growth Operations Manager',
+          company: 'Airbnb',
+          location: 'San Francisco, CA',
+          type: 'Full-time',
+          description: 'Optimize and scale growth operations to drive marketplace efficiency and expansion.',
+          requirements: ['3+ years of operations or growth experience', 'Experience with marketplace businesses', 'Strong project management skills'],
+          skills: ['Growth Operations', 'Marketplace Dynamics', 'Process Optimization', 'Data Analysis', 'Project Management'],
+          postedDate: new Date(Date.now() - Math.floor(Math.random() * 6 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+          canAutoApply: false,
+          source: 'Google Jobs',
+          sourceId: 'google-23456',
+          applyUrl: 'https://careers.airbnb.com/positions/123456/'
+        }
+      );
+    }
+  }
   
   // Filter jobs based on search criteria
   let filteredJobs = [...googleJobs];

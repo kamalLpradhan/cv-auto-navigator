@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, FileCheck, Clock, X, CheckCircle, AlertTriangle, Globe } from 'lucide-react';
+import { Search, FileCheck, Clock, X, CheckCircle, AlertTriangle, Globe, Briefcase } from 'lucide-react';
 import ApplicationCard from './ApplicationCard';
 
 export interface Application {
@@ -66,6 +66,16 @@ const ApplicationTracker = () => {
       filtered = filtered.filter(app => app.status === 'Failed');
     } else if (activeTab === 'google') {
       filtered = filtered.filter(app => app.source === 'Google Jobs');
+    } else if (activeTab === 'product') {
+      filtered = filtered.filter(app => 
+        app.jobTitle.toLowerCase().includes('product manager') || 
+        app.position?.toLowerCase().includes('product manager')
+      );
+    } else if (activeTab === 'growth') {
+      filtered = filtered.filter(app => 
+        app.jobTitle.toLowerCase().includes('growth') || 
+        app.position?.toLowerCase().includes('growth')
+      );
     }
     
     setFilteredApplications(filtered);
@@ -76,15 +86,23 @@ const ApplicationTracker = () => {
     const manual = applications.filter(app => !app.autoApplied).length;
     const failed = applications.filter(app => app.status === 'Failed').length;
     const google = applications.filter(app => app.source === 'Google Jobs').length;
+    const product = applications.filter(app => 
+      app.jobTitle.toLowerCase().includes('product manager') || 
+      app.position?.toLowerCase().includes('product manager')
+    ).length;
+    const growth = applications.filter(app => 
+      app.jobTitle.toLowerCase().includes('growth') || 
+      app.position?.toLowerCase().includes('growth')
+    ).length;
     
-    return { autoApplied, manual, failed, google, total: applications.length };
+    return { autoApplied, manual, failed, google, product, growth, total: applications.length };
   };
   
   const counts = getStatusCounts();
   
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card className="glass-panel transition-all duration-300 hover:shadow-md">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -103,11 +121,11 @@ const ApplicationTracker = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Auto-Applied</p>
-                <h3 className="text-3xl font-bold mt-1">{counts.autoApplied}</h3>
+                <p className="text-sm font-medium text-muted-foreground">Product Manager Jobs</p>
+                <h3 className="text-3xl font-bold mt-1">{counts.product}</h3>
               </div>
-              <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <CheckCircle className="text-green-600 dark:text-green-400" size={22} />
+              <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <Briefcase className="text-purple-600 dark:text-purple-400" size={22} />
               </div>
             </div>
           </CardContent>
@@ -117,25 +135,11 @@ const ApplicationTracker = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Google Jobs</p>
-                <h3 className="text-3xl font-bold mt-1">{counts.google}</h3>
+                <p className="text-sm font-medium text-muted-foreground">Growth Jobs</p>
+                <h3 className="text-3xl font-bold mt-1">{counts.growth}</h3>
               </div>
               <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                 <Globe className="text-blue-600 dark:text-blue-400" size={22} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="glass-panel transition-all duration-300 hover:shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Failed Applications</p>
-                <h3 className="text-3xl font-bold mt-1">{counts.failed}</h3>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <AlertTriangle className="text-amber-600 dark:text-amber-400" size={22} />
               </div>
             </div>
           </CardContent>
@@ -169,10 +173,11 @@ const ApplicationTracker = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
+            <TabsList className="mb-4 flex flex-wrap">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="auto">Auto-Applied</TabsTrigger>
-              <TabsTrigger value="manual">Manual</TabsTrigger>
+              <TabsTrigger value="product">Product Manager</TabsTrigger>
+              <TabsTrigger value="growth">Growth</TabsTrigger>
               <TabsTrigger value="google">Google Jobs</TabsTrigger>
               <TabsTrigger value="failed">Failed</TabsTrigger>
             </TabsList>
@@ -196,7 +201,7 @@ const ApplicationTracker = () => {
                   <p className="text-muted-foreground">
                     {searchTerm 
                       ? "No applications match your search criteria" 
-                      : "Start applying to jobs to see your applications here"}
+                      : "Upload your CV and start applying to jobs to see them here"}
                   </p>
                 </div>
               )}

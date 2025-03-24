@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Search, BriefcaseBusiness, MapPin, Filter, CheckCircle, AlertCircle, Globe, Loader2 } from 'lucide-react';
+import { Search, BriefcaseBusiness, MapPin, Filter, CheckCircle, AlertCircle, Globe, Loader2, Clock } from 'lucide-react';
 import { applyToJob, fetchGoogleJobs, fetchJobs } from '@/utils/applicationService';
 
 // Job types for the interface
@@ -81,7 +80,8 @@ const JobSearch = () => {
     const loadInitialGoogleJobs = async () => {
       setIsLoadingGoogleJobs(true);
       try {
-        const googleJobs = await fetchGoogleJobs();
+        // Default to product manager and growth manager jobs
+        const googleJobs = await fetchGoogleJobs('product manager, growth manager');
         setSearchResults([...mockJobs, ...googleJobs]);
       } catch (error) {
         console.error("Error fetching Google jobs:", error);
@@ -103,15 +103,18 @@ const JobSearch = () => {
     setIsSearching(true);
     
     try {
+      // Default to product manager, growth manager if no search term
+      const effectiveSearchTerm = searchTerm || 'product manager, growth manager';
+      
       // Fetch Google jobs based on search criteria
-      const googleJobs = await fetchGoogleJobs(searchTerm, location);
+      const googleJobs = await fetchGoogleJobs(effectiveSearchTerm, location);
       
       // Filter local mock jobs based on search criteria
       const filteredMockJobs = mockJobs.filter(job => {
-        const matchesSearchTerm = searchTerm === '' || 
-          job.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-          job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesSearchTerm = effectiveSearchTerm === '' || 
+          job.title.toLowerCase().includes(effectiveSearchTerm.toLowerCase()) || 
+          job.company.toLowerCase().includes(effectiveSearchTerm.toLowerCase()) ||
+          job.skills.some(skill => skill.toLowerCase().includes(effectiveSearchTerm.toLowerCase()));
           
         const matchesLocation = location === '' || 
           job.location.toLowerCase().includes(location.toLowerCase());
@@ -236,6 +239,23 @@ const JobSearch = () => {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return 'Today';
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays <= 7) {
+      return `${diffDays} days ago`;
+    } else {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto">
       <Card className="glass-panel mb-8">
@@ -251,7 +271,7 @@ const JobSearch = () => {
                   id="job-search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="e.g. Frontend Developer"
+                  placeholder="e.g. Product Manager, Growth Manager"
                   className="pl-10"
                 />
               </div>
@@ -295,7 +315,7 @@ const JobSearch = () => {
         <div className="text-center py-10 animate-fade-in">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-muted-foreground">
-            Loading Google Jobs data...
+            Loading Google Jobs data for Product and Growth Managers...
           </p>
         </div>
       )}
@@ -307,7 +327,7 @@ const JobSearch = () => {
               <CardContent className="p-0">
                 <div className="p-6">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                    <div>
+                    <div className="flex-1">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                         <BriefcaseBusiness size={15} />
                         <span>{job.company}</span>
@@ -321,6 +341,9 @@ const JobSearch = () => {
                             <span>{job.source}</span>
                           </>
                         )}
+                        <span className="w-1 h-1 rounded-full bg-muted-foreground"></span>
+                        <Clock size={15} />
+                        <span>{formatDate(job.postedDate)}</span>
                       </div>
                       
                       <h3 className="text-xl font-medium">{job.title}</h3>
@@ -350,28 +373,30 @@ const JobSearch = () => {
                       </div>
                     </div>
                     
-                    {appliedJobs[job.id] ? (
-                      <div className={`text-sm py-1 px-3 rounded ${
-                        appliedJobs[job.id].success 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
-                          : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                      }`}>
-                        {appliedJobs[job.id].success ? 'Applied' : 'Application Failed'}
-                      </div>
-                    ) : (
-                      <Button
-                        onClick={() => handleApply(job)}
-                        disabled={isApplying[job.id]}
-                        className="mt-2 md:mt-0"
-                      >
-                        {isApplying[job.id] ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Applying...
-                          </>
-                        ) : 'Apply Now'}
-                      </Button>
-                    )}
+                    <div className="md:text-right">
+                      {appliedJobs[job.id] ? (
+                        <div className={`text-sm py-1 px-3 rounded ${
+                          appliedJobs[job.id].success 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                        }`}>
+                          {appliedJobs[job.id].success ? 'Applied' : 'Application Failed'}
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => handleApply(job)}
+                          disabled={isApplying[job.id]}
+                          className="mt-2 md:mt-0"
+                        >
+                          {isApplying[job.id] ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Applying...
+                            </>
+                          ) : 'Apply Now'}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   
                   <Separator className="my-4" />
@@ -397,7 +422,7 @@ const JobSearch = () => {
         </div>
       )}
       
-      {searchResults.length === 0 && searchTerm && !isSearching && !isLoadingGoogleJobs && (
+      {searchResults.length === 0 && !isSearching && !isLoadingGoogleJobs && (
         <div className="text-center py-12 animate-fade-in">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-4">
             <Search className="text-muted-foreground" size={24} />
