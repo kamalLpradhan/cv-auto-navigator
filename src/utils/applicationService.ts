@@ -221,7 +221,133 @@ export const parseCV = async (file: File): Promise<Record<string, any>> => {
   });
 };
 
-// New function to fetch Google Jobs API data
+// New function to fetch LinkedIn Jobs API data
+export const fetchLinkedInJobs = async (searchTerm?: string, location?: string): Promise<Job[]> => {
+  console.log(`Fetching LinkedIn Jobs with searchTerm: ${searchTerm}, location: ${location}`);
+  
+  // In a real implementation, this would make an API call to LinkedIn Jobs or a proxy service
+  // For demo purposes, we'll simulate the API response
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000));
+  
+  // Generate some realistic LinkedIn Jobs data focused on Growth Manager positions
+  let linkedInJobs: Job[] = [
+    {
+      id: 'li' + Math.random().toString(36).substring(2, 10),
+      title: 'Growth Manager',
+      company: 'LinkedIn',
+      location: 'Sunnyvale, CA',
+      type: 'Full-time',
+      description: "Join LinkedIn's Growth team to drive user acquisition and engagement strategies for our platform.",
+      requirements: ['3-5 years of growth marketing experience', 'Experience with B2B products', 'Strong analytical skills'],
+      skills: ['Growth Marketing', 'User Acquisition', 'A/B Testing', 'Data Analysis', 'SEO/SEM'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 5 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: true,
+      source: 'LinkedIn Jobs',
+      sourceId: 'linkedin-12345',
+      applyUrl: 'https://www.linkedin.com/jobs/view/growth-manager-at-linkedin-12345/'
+    },
+    {
+      id: 'li' + Math.random().toString(36).substring(2, 10),
+      title: 'Senior Growth Manager',
+      company: 'Salesforce',
+      location: 'San Francisco, CA',
+      type: 'Full-time',
+      description: "Lead growth initiatives for Salesforce's platform products, focusing on user activation and retention.",
+      requirements: ['5+ years of growth marketing experience', 'Experience with SaaS products', 'Team leadership experience'],
+      skills: ['Growth Strategy', 'User Retention', 'SaaS', 'Team Leadership', 'CRM'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 3 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: true,
+      source: 'LinkedIn Jobs',
+      sourceId: 'linkedin-23456',
+      applyUrl: 'https://www.linkedin.com/jobs/view/senior-growth-manager-at-salesforce-23456/'
+    },
+    {
+      id: 'li' + Math.random().toString(36).substring(2, 10),
+      title: 'Growth Marketing Manager',
+      company: 'Dropbox',
+      location: 'Remote',
+      type: 'Full-time',
+      description: "Create and execute growth marketing strategies to increase user acquisition and engagement for Dropbox products.",
+      requirements: ['4+ years of growth marketing experience', 'Experience with freemium products', 'Strong data analysis skills'],
+      skills: ['Growth Marketing', 'User Acquisition', 'Marketing Automation', 'Analytics', 'A/B Testing'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 2 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: true,
+      source: 'LinkedIn Jobs',
+      sourceId: 'linkedin-34567',
+      applyUrl: 'https://www.linkedin.com/jobs/view/growth-marketing-manager-at-dropbox-34567/'
+    },
+    {
+      id: 'li' + Math.random().toString(36).substring(2, 10),
+      title: 'B2B Growth Manager',
+      company: 'Adobe',
+      location: 'San Jose, CA',
+      type: 'Full-time',
+      description: "Lead B2B growth initiatives for Adobe's Creative Cloud products, focusing on business customer acquisition and expansion.",
+      requirements: ['4+ years of B2B marketing experience', 'Experience with SaaS products', 'Strong analytical mindset'],
+      skills: ['B2B Marketing', 'Growth Strategy', 'SaaS', 'CRM', 'Marketing Automation'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 6 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: true,
+      source: 'LinkedIn Jobs',
+      sourceId: 'linkedin-45678',
+      applyUrl: 'https://www.linkedin.com/jobs/view/b2b-growth-manager-at-adobe-45678/'
+    },
+    {
+      id: 'li' + Math.random().toString(36).substring(2, 10),
+      title: 'Growth Product Manager',
+      company: 'Slack',
+      location: 'Remote',
+      type: 'Full-time',
+      description: "Own product growth initiatives, focusing on user acquisition, activation, and retention for Slack's platform.",
+      requirements: ['3+ years of product management experience', 'Growth-focused product experience', 'Strong analytical skills'],
+      skills: ['Product Management', 'Growth Product', 'User Retention', 'Product Analytics', 'A/B Testing'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 4 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: false,
+      source: 'LinkedIn Jobs',
+      sourceId: 'linkedin-56789',
+      applyUrl: 'https://www.linkedin.com/jobs/view/growth-product-manager-at-slack-56789/'
+    },
+    {
+      id: 'li' + Math.random().toString(36).substring(2, 10),
+      title: 'International Growth Manager',
+      company: 'Airbnb',
+      location: 'San Francisco, CA',
+      type: 'Full-time',
+      description: "Lead international growth strategies to drive Airbnb's expansion in emerging markets.",
+      requirements: ['5+ years of growth or marketing experience', 'International market experience', 'Strong analytical skills'],
+      skills: ['International Marketing', 'Growth Strategy', 'Market Expansion', 'User Acquisition', 'Analytics'],
+      postedDate: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+      canAutoApply: true,
+      source: 'LinkedIn Jobs',
+      sourceId: 'linkedin-67890',
+      applyUrl: 'https://www.linkedin.com/jobs/view/international-growth-manager-at-airbnb-67890/'
+    }
+  ];
+  
+  // Filter jobs based on search criteria
+  let filteredJobs = [...linkedInJobs];
+  
+  if (searchTerm) {
+    const searchTermLower = searchTerm.toLowerCase();
+    filteredJobs = filteredJobs.filter(job => 
+      job.title.toLowerCase().includes(searchTermLower) || 
+      job.company.toLowerCase().includes(searchTermLower) ||
+      job.skills.some(skill => skill.toLowerCase().includes(searchTermLower))
+    );
+  }
+  
+  if (location) {
+    const locationLower = location.toLowerCase();
+    filteredJobs = filteredJobs.filter(job => 
+      job.location.toLowerCase().includes(locationLower)
+    );
+  }
+  
+  return filteredJobs;
+};
+
+// Update the function to fetch Google Jobs API data
 export const fetchGoogleJobs = async (searchTerm?: string, location?: string): Promise<Job[]> => {
   console.log(`Fetching Google Jobs with searchTerm: ${searchTerm}, location: ${location}`);
   
@@ -443,13 +569,14 @@ export const fetchGoogleJobs = async (searchTerm?: string, location?: string): P
   return filteredJobs;
 };
 
-// New function to fetch jobs from multiple sources
+// Update function to fetch jobs from multiple sources
 export const fetchJobs = async (searchTerm?: string, location?: string): Promise<Job[]> => {
   // Fetch Google Jobs
   const googleJobs = await fetchGoogleJobs(searchTerm, location);
   
-  // In a real implementation, you would fetch from multiple job sources
-  // and combine the results
+  // Fetch LinkedIn Jobs (specifically for Growth Manager roles)
+  const linkedInJobs = await fetchLinkedInJobs("growth manager", location);
   
-  return googleJobs;
+  // Combine all job sources
+  return [...googleJobs, ...linkedInJobs];
 };

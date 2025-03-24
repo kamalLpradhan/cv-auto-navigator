@@ -66,6 +66,35 @@ const Dashboard = () => {
           autoApplied: false,
           message: "Application requires additional assessment test",
           contactEmail: "recruiting@startup-innovations.co"
+        },
+        {
+          id: "app4",
+          jobId: "job4",
+          jobTitle: "Growth Manager",
+          company: "LinkedIn",
+          position: "Growth Marketing Manager",
+          appliedDate: new Date(Date.now() - 86400000 * 1).toISOString(), // 1 day ago
+          status: "Applied",
+          autoApplied: true,
+          contactName: "Jennifer Davis",
+          contactEmail: "jennifer.davis@linkedin.com",
+          contactLinkedIn: "linkedin.com/in/jennifer-davis-342",
+          source: "LinkedIn Jobs",
+          sourceId: "linkedin-12345"
+        },
+        {
+          id: "app5",
+          jobId: "job5",
+          jobTitle: "Growth Product Manager",
+          company: "Slack",
+          position: "Growth Product Manager - Remote",
+          appliedDate: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
+          status: "Interview",
+          autoApplied: true,
+          contactName: "Robert Miller",
+          contactLinkedIn: "linkedin.com/in/robert-miller-789",
+          source: "LinkedIn Jobs",
+          sourceId: "linkedin-56789"
         }
       ];
       

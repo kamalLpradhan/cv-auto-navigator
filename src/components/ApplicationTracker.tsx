@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, FileCheck, Clock, X, CheckCircle, AlertTriangle, Globe, Briefcase } from 'lucide-react';
+import { Search, FileCheck, Clock, X, CheckCircle, AlertTriangle, Globe, Briefcase, Linkedin } from 'lucide-react';
 import ApplicationCard from './ApplicationCard';
 
 export interface Application {
@@ -66,6 +66,8 @@ const ApplicationTracker = () => {
       filtered = filtered.filter(app => app.status === 'Failed');
     } else if (activeTab === 'google') {
       filtered = filtered.filter(app => app.source === 'Google Jobs');
+    } else if (activeTab === 'linkedin') {
+      filtered = filtered.filter(app => app.source === 'LinkedIn Jobs');
     } else if (activeTab === 'product') {
       filtered = filtered.filter(app => 
         app.jobTitle.toLowerCase().includes('product manager') || 
@@ -86,6 +88,7 @@ const ApplicationTracker = () => {
     const manual = applications.filter(app => !app.autoApplied).length;
     const failed = applications.filter(app => app.status === 'Failed').length;
     const google = applications.filter(app => app.source === 'Google Jobs').length;
+    const linkedin = applications.filter(app => app.source === 'LinkedIn Jobs').length;
     const product = applications.filter(app => 
       app.jobTitle.toLowerCase().includes('product manager') || 
       app.position?.toLowerCase().includes('product manager')
@@ -95,7 +98,7 @@ const ApplicationTracker = () => {
       app.position?.toLowerCase().includes('growth')
     ).length;
     
-    return { autoApplied, manual, failed, google, product, growth, total: applications.length };
+    return { autoApplied, manual, failed, google, linkedin, product, growth, total: applications.length };
   };
   
   const counts = getStatusCounts();
@@ -121,8 +124,8 @@ const ApplicationTracker = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Product Manager Jobs</p>
-                <h3 className="text-3xl font-bold mt-1">{counts.product}</h3>
+                <p className="text-sm font-medium text-muted-foreground">Growth Manager Jobs</p>
+                <h3 className="text-3xl font-bold mt-1">{counts.growth}</h3>
               </div>
               <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                 <Briefcase className="text-purple-600 dark:text-purple-400" size={22} />
@@ -135,11 +138,11 @@ const ApplicationTracker = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Growth Jobs</p>
-                <h3 className="text-3xl font-bold mt-1">{counts.growth}</h3>
+                <p className="text-sm font-medium text-muted-foreground">LinkedIn Applications</p>
+                <h3 className="text-3xl font-bold mt-1">{counts.linkedin}</h3>
               </div>
               <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <Globe className="text-blue-600 dark:text-blue-400" size={22} />
+                <Linkedin className="text-blue-600 dark:text-blue-400" size={22} />
               </div>
             </div>
           </CardContent>
@@ -179,6 +182,14 @@ const ApplicationTracker = () => {
               <TabsTrigger value="product">Product Manager</TabsTrigger>
               <TabsTrigger value="growth">Growth</TabsTrigger>
               <TabsTrigger value="google">Google Jobs</TabsTrigger>
+              <TabsTrigger value="linkedin">
+                <span className="flex items-center gap-1">
+                  LinkedIn
+                  <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                    New
+                  </span>
+                </span>
+              </TabsTrigger>
               <TabsTrigger value="failed">Failed</TabsTrigger>
             </TabsList>
             
