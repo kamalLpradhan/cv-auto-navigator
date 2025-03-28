@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { useEffect } from "react";
 
 interface JobSourceFilterProps {
   sources: string[];
@@ -40,6 +41,14 @@ const JobSourceFilter = ({
       onSourceChange([...sources]);
     }
   };
+  
+  // Update parent component immediately when sources change
+  useEffect(() => {
+    // If we have sources but no selected sources, select all by default
+    if (sources.length > 0 && selectedSources.length === 0) {
+      onSourceChange([...sources]);
+    }
+  }, [sources, selectedSources.length, onSourceChange]);
   
   return (
     <DropdownMenu>
