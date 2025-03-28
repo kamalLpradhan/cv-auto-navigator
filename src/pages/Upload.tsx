@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import CVUploader from '@/components/CVUploader';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 const Upload = () => {
   const navigate = useNavigate();
@@ -64,13 +65,7 @@ const Upload = () => {
         </section>
       </main>
       
-      <footer className="border-t py-6 md:py-8">
-        <div className="container flex flex-col items-center justify-center gap-4 px-4 md:px-6 md:flex-row">
-          <p className="text-center text-sm text-muted-foreground md:text-left">
-            &copy; {new Date().getFullYear()} CV Navigator. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
