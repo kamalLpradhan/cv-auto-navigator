@@ -22,8 +22,24 @@ const Index = () => {
       <Header />
       
       <main className="flex-1 flex flex-col">
-        <section className="py-24 lg:py-32 flex items-center">
-          <div className="container px-4 md:px-6">
+        <section className="py-24 lg:py-32 flex items-center relative overflow-hidden">
+          {/* Video Background */}
+          <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
+            <video 
+              autoPlay 
+              loop 
+              muted 
+              playsInline
+              className="w-full h-full object-cover opacity-20 dark:opacity-10"
+              poster="/placeholder.svg"
+            >
+              <source src="https://cdn.gpteng.co/videos/tech-typing.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background"></div>
+          </div>
+
+          <div className="container px-4 md:px-6 relative z-10">
             <div className="flex flex-col md:flex-row md:items-center md:gap-12">
               <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-4 mb-8 md:mb-0">
                 <div className="space-y-2">
@@ -55,8 +71,8 @@ const Index = () => {
                 </div>
               </div>
               
-              <div className="flex-1 max-w-md mx-auto md:mx-0 w-full animate-slide-up">
-                <div className="bg-background rounded-xl border shadow-sm p-6">
+              <div className="flex-1 max-w-md mx-auto md:mx-0 w-full animate-slide-up relative z-10">
+                <div className="bg-background/90 backdrop-blur-sm rounded-xl border shadow-sm p-6">
                   <h2 className="text-2xl font-semibold mb-6 text-center">Get Started</h2>
                   <AuthButtons />
                 </div>
