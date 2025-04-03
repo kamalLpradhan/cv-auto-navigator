@@ -8,6 +8,10 @@ import Index from "./pages/Index";
 import Upload from "./pages/Upload";
 import Apply from "./pages/Apply";
 import Dashboard from "./pages/Dashboard";
+import Help from "./pages/Help";
+import Contact from "./pages/Contact";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "./providers/ThemeProvider";
 import ChatbotHelp from "./components/ChatbotHelp";
@@ -26,6 +30,10 @@ const App = () => (
             <Route path="/upload" element={<Upload />} />
             <Route path="/apply" element={<Apply />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
