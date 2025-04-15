@@ -3,10 +3,12 @@ import { Github, Mail, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/providers/AuthProvider";
 
 export const AuthButtons = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { login } = useAuth();
   
   const handleSocialSignIn = (provider: string) => {
     // In a real implementation, this would redirect to authentication provider
@@ -15,8 +17,16 @@ export const AuthButtons = () => {
       description: "Authentication functionality will be implemented in the future.",
     });
     
-    // For demo purposes, we'll just navigate to the dashboard
-    // In a real app, this would happen after successful authentication
+    // For demo purposes, we'll simulate a successful login
+    const mockUser = {
+      id: `user-${Date.now()}`,
+      name: `Demo User`,
+      email: `demo-${Date.now()}@example.com`,
+    };
+    
+    login(mockUser);
+    
+    // Navigate to the dashboard after successful authentication
     setTimeout(() => navigate("/dashboard"), 1500);
   };
 

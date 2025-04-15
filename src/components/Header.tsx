@@ -12,12 +12,15 @@ import {
 } from "lucide-react";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ThemeToggle } from './ThemeToggle';
+import ProfileDropdown from './ProfileDropdown';
+import { useAuth } from '@/providers/AuthProvider';
 
 const Header = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { isAuthenticated } = useAuth();
   
   // Handle scroll effect
   useEffect(() => {
@@ -52,6 +55,7 @@ const Header = () => {
           <>
             <div className="flex items-center gap-2">
               <ThemeToggle />
+              {isAuthenticated && <ProfileDropdown />}
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -149,7 +153,10 @@ const Header = () => {
                 Applications
               </NavLink>
             </nav>
-            <ThemeToggle />
+            <div className="flex items-center space-x-2">
+              <ThemeToggle />
+              {isAuthenticated && <ProfileDropdown />}
+            </div>
           </div>
         )}
       </div>
