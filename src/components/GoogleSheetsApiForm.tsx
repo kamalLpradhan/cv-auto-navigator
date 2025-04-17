@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { useAuth } from '@/providers/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
-import { InfoCircle } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 const GoogleSheetsApiForm = () => {
   const { googleSheetsApiKey, setGoogleSheetsApiKey } = useAuth();
@@ -46,7 +46,7 @@ const GoogleSheetsApiForm = () => {
       <CardContent className="space-y-4">
         <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-md border border-amber-200 dark:border-amber-800">
           <div className="flex gap-2">
-            <InfoCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm text-amber-800 dark:text-amber-300">
                 You need a Google Sheets API key to use this feature. This allows the app to store user data in your Google Sheet.
