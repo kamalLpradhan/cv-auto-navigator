@@ -16,6 +16,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import GoogleSheetsApiForm from "@/components/GoogleSheetsApiForm";
 
 const Settings = () => {
   const { user, login } = useAuth();
@@ -59,76 +60,80 @@ const Settings = () => {
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
           
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>Update your account profile information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex flex-col space-y-2">
-                <Label htmlFor="avatar">Profile Picture</Label>
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-20 w-20">
-                    {avatar ? (
-                      <AvatarImage src={avatar} alt={name} />
-                    ) : (
-                      <AvatarFallback className="text-xl">
-                        {name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2)}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div className="flex-1">
-                    <Input
-                      id="avatar"
-                      placeholder="Avatar URL (e.g. https://example.com/avatar.jpg)"
-                      value={avatar}
-                      onChange={(e) => setAvatar(e.target.value)}
-                      className="w-full"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Enter a URL to your profile picture
-                    </p>
+          <div className="space-y-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>Update your account profile information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex flex-col space-y-2">
+                  <Label htmlFor="avatar">Profile Picture</Label>
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="h-20 w-20">
+                      {avatar ? (
+                        <AvatarImage src={avatar} alt={name} />
+                      ) : (
+                        <AvatarFallback className="text-xl">
+                          {name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2)}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="flex-1">
+                      <Input
+                        id="avatar"
+                        placeholder="Avatar URL (e.g. https://example.com/avatar.jpg)"
+                        value={avatar}
+                        onChange={(e) => setAvatar(e.target.value)}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Enter a URL to your profile picture
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="flex flex-col space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Full Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              
-              <div className="flex flex-col space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={handleSave}>Save Changes</Button>
-            </CardFooter>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Preferences</CardTitle>
-              <CardDescription>Manage your account preferences and notifications</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                Account preferences will be implemented in a future update.
-              </p>
-            </CardContent>
-          </Card>
+                
+                <div className="flex flex-col space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="Full Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+                
+                <div className="flex flex-col space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={handleSave}>Save Changes</Button>
+              </CardFooter>
+            </Card>
+            
+            <GoogleSheetsApiForm />
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Preferences</CardTitle>
+                <CardDescription>Manage your account preferences and notifications</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">
+                  Account preferences will be implemented in a future update.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </main>
       <Footer />
