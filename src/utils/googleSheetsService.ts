@@ -1,6 +1,4 @@
 
-import { google, sheets_v4 } from 'googleapis';
-
 // Configuration 
 const SPREADSHEET_ID = '17nfr1gMWO7FgMgY195p_pU3hh8YLS3GcyJqHDL6umg0';
 const SHEET_NAME = 'Users';
@@ -8,36 +6,28 @@ const SHEET_NAME = 'Users';
 // This is a frontend-only approach for demo purposes
 // In a production app, this should be handled by a secure backend
 export class GoogleSheetsService {
-  private sheets: sheets_v4.Sheets | null = null;
+  private apiKey: string;
 
   constructor(apiKey: string) {
-    if (!apiKey) {
-      console.error('Google Sheets API key is required');
-      return;
-    }
-    
-    try {
-      this.sheets = google.sheets({
-        version: 'v4',
-        auth: apiKey
-      });
-    } catch (error) {
-      console.error('Error initializing Google Sheets API:', error);
-    }
+    this.apiKey = apiKey;
   }
 
   async getAllUsers(): Promise<any[]> {
-    if (!this.sheets) return [];
+    if (!this.apiKey) return [];
     
     try {
-      const response = await this.sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A2:F`,
-      });
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A2:F?key=${this.apiKey}`
+      );
       
-      const rows = response.data.values || [];
+      if (!response.ok) {
+        throw new Error(`Google Sheets API error: ${response.status}`);
+      }
       
-      return rows.map((row) => ({
+      const data = await response.json();
+      const rows = data.values || [];
+      
+      return rows.map((row: any[]) => ({
         id: row[0],
         name: row[1],
         email: row[2],
@@ -52,29 +42,35 @@ export class GoogleSheetsService {
   }
 
   async addUser(user: { id: string; name: string; email: string; avatar?: string }): Promise<boolean> {
-    if (!this.sheets) return false;
+    if (!this.apiKey) return false;
     
     try {
       const now = new Date().toISOString();
+      const values = [
+        [
+          user.id,
+          user.name,
+          user.email,
+          user.avatar || '',
+          now, // lastLogin
+          now  // registeredDate
+        ]
+      ];
       
-      await this.sheets.spreadsheets.values.append({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A2:F`,
-        valueInputOption: 'USER_ENTERED',
-        insertDataOption: 'INSERT_ROWS',
-        requestBody: {
-          values: [
-            [
-              user.id,
-              user.name,
-              user.email,
-              user.avatar || '',
-              now, // lastLogin
-              now  // registeredDate
-            ]
-          ]
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A:F:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS&key=${this.apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ values })
         }
-      });
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Google Sheets API error: ${response.status}`);
+      }
       
       return true;
     } catch (error) {
@@ -84,32 +80,20 @@ export class GoogleSheetsService {
   }
 
   async updateUser(userId: string, userData: Partial<{ name: string; email: string; avatar?: string; lastLogin?: string }>): Promise<boolean> {
-    if (!this.sheets) return false;
+    if (!this.apiKey) return false;
     
     try {
-      // First, find the user row
-      const response = await this.sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A2:F`,
-      });
+      // First, get all users to find the row
+      const users = await this.getAllUsers();
+      const userIndex = users.findIndex(u => u.id === userId);
       
-      const rows = response.data.values || [];
-      const rowIndex = rows.findIndex(row => row[0] === userId);
-      
-      if (rowIndex === -1) {
+      if (userIndex === -1) {
         console.error('User not found in Google Sheets');
         return false;
       }
       
       // Get current user data
-      const currentData = {
-        id: rows[rowIndex][0],
-        name: rows[rowIndex][1],
-        email: rows[rowIndex][2],
-        avatar: rows[rowIndex][3] || '',
-        lastLogin: rows[rowIndex][4] || '',
-        registeredDate: rows[rowIndex][5] || ''
-      };
+      const currentData = users[userIndex];
       
       // Update with new data
       const updatedData = {
@@ -118,24 +102,34 @@ export class GoogleSheetsService {
         lastLogin: userData.lastLogin || new Date().toISOString()
       };
       
-      // Update the row
-      await this.sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A${rowIndex + 2}:F${rowIndex + 2}`,
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-          values: [
-            [
-              updatedData.id,
-              updatedData.name,
-              updatedData.email,
-              updatedData.avatar,
-              updatedData.lastLogin,
-              updatedData.registeredDate
-            ]
-          ]
+      // Update requires the row index in the sheet (add 2 because data starts at row 2)
+      const rowIndex = userIndex + 2;
+      
+      const values = [
+        [
+          updatedData.id,
+          updatedData.name,
+          updatedData.email,
+          updatedData.avatar,
+          updatedData.lastLogin,
+          updatedData.registeredDate
+        ]
+      ];
+      
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A${rowIndex}:F${rowIndex}?valueInputOption=USER_ENTERED&key=${this.apiKey}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ values })
         }
-      });
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Google Sheets API error: ${response.status}`);
+      }
       
       return true;
     } catch (error) {
@@ -145,31 +139,35 @@ export class GoogleSheetsService {
   }
 
   async deleteUser(userId: string): Promise<boolean> {
-    if (!this.sheets) return false;
+    if (!this.apiKey) return false;
     
     try {
-      // This is a simplistic approach - Google Sheets API doesn't directly support deleting rows
-      // A real implementation would involve more complex operations or use of Apps Script
+      // First, get all users to find the row
+      const users = await this.getAllUsers();
+      const userIndex = users.findIndex(u => u.id === userId);
       
-      // First, find the user row
-      const response = await this.sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A2:F`,
-      });
-      
-      const rows = response.data.values || [];
-      const rowIndex = rows.findIndex(row => row[0] === userId);
-      
-      if (rowIndex === -1) {
+      if (userIndex === -1) {
         console.error('User not found in Google Sheets');
         return false;
       }
       
-      // Clear the row (since we can't delete it easily)
-      await this.sheets.spreadsheets.values.clear({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A${rowIndex + 2}:F${rowIndex + 2}`,
-      });
+      // Update requires the row index in the sheet (add 2 because data starts at row 2)
+      const rowIndex = userIndex + 2;
+      
+      // Clear the row (since we can't delete it easily via the API)
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A${rowIndex}:F${rowIndex}/clear?key=${this.apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Google Sheets API error: ${response.status}`);
+      }
       
       return true;
     } catch (error) {
