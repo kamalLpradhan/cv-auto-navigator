@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Upload, Search, CheckCircle, Target } from "lucide-react";
@@ -24,11 +25,16 @@ const Index = () => {
         <section className="py-24 lg:py-32 flex items-center relative overflow-hidden">
           {/* Background Image */}
           <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-            <img 
-              src="/placeholder.svg" 
-              alt="Background" 
+            <video 
+              autoPlay 
+              loop 
+              muted 
+              playsInline
               className="w-full h-full object-cover opacity-20 dark:opacity-10"
-            />
+            >
+              <source src={`https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1600&h=900&fit=crop`} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
             <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background"></div>
           </div>
 
