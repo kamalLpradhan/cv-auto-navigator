@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Upload, Search, CheckCircle, Target } from "lucide-react";
@@ -23,19 +22,13 @@ const Index = () => {
       
       <main className="flex-1 flex flex-col">
         <section className="py-24 lg:py-32 flex items-center relative overflow-hidden">
-          {/* Video Background */}
+          {/* Background Image */}
           <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-            <video 
-              autoPlay 
-              loop 
-              muted 
-              playsInline
+            <img 
+              src="/placeholder.svg" 
+              alt="Background" 
               className="w-full h-full object-cover opacity-20 dark:opacity-10"
-              poster="/placeholder.svg"
-            >
-              <source src="https://cdn.gpteng.co/videos/tech-typing.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+            />
             <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background"></div>
           </div>
 
