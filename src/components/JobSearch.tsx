@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { Search, BriefcaseBusiness, MapPin, Filter, CheckCircle, AlertCircle, Gl
 import { applyToJob } from '@/utils/applicationService';
 import { debounce } from 'lodash';
 import { searchJobs } from '@/utils/googleSearchService';
+import { useAuth } from '@/providers/AuthProvider';
 
 // Job types for the interface
 interface Job {
@@ -34,15 +36,31 @@ const JobSearch = () => {
   const [searchResults, setSearchResults] = useState<Job[]>([]);
   const [isApplying, setIsApplying] = useState<Record<string, boolean>>({});
   const [appliedJobs, setAppliedJobs] = useState<Record<string, { success: boolean; message?: string }>>({});
+  const [searchEngineId, setSearchEngineId] = useState('');
   const { toast } = useToast();
-  const SEARCH_ENGINE_ID = '';
+  const { user } = useAuth();
+  
+  // Effect to get or prompt for Search Engine ID
+  useEffect(() => {
+    const storedSearchEngineId = localStorage.getItem('searchEngineId');
+    if (storedSearchEngineId) {
+      setSearchEngineId(storedSearchEngineId);
+    } else {
+      // Show prompt to enter Search Engine ID
+      const id = prompt('Please enter your Google Custom Search Engine ID:');
+      if (id) {
+        localStorage.setItem('searchEngineId', id);
+        setSearchEngineId(id);
+      }
+    }
+  }, []);
 
   const performSearch = useCallback(async (term: string, loc: string) => {
     if (!term && !loc) return;
     
     setIsSearching(true);
     try {
-      if (!SEARCH_ENGINE_ID) {
+      if (!searchEngineId) {
         toast({
           title: "Search Engine ID Required",
           description: "Please set up your Google Custom Search Engine ID",
@@ -51,7 +69,7 @@ const JobSearch = () => {
         return;
       }
 
-      const searchResults = await searchJobs(term, loc);
+      const searchResults = await searchJobs(term, loc, searchEngineId);
       setSearchResults(searchResults);
       
       if (searchResults.length === 0) {
@@ -71,7 +89,7 @@ const JobSearch = () => {
     } finally {
       setIsSearching(false);
     }
-  }, [toast]);
+  }, [toast, searchEngineId]);
 
   // Debounced search function
   const debouncedSearch = useCallback(
@@ -87,7 +105,6 @@ const JobSearch = () => {
     return () => debouncedSearch.cancel();
   }, [searchTerm, location, debouncedSearch]);
 
-  // Add the missing handleApply function
   const handleApply = async (job: Job) => {
     // Set applying state for this job
     setIsApplying(prev => ({ ...prev, [job.id]: true }));
@@ -126,6 +143,19 @@ const JobSearch = () => {
     } finally {
       // Reset applying state
       setIsApplying(prev => ({ ...prev, [job.id]: false }));
+    }
+  };
+
+  // Add a function to update Search Engine ID
+  const updateSearchEngineId = () => {
+    const id = prompt('Please enter your Google Custom Search Engine ID:', searchEngineId);
+    if (id) {
+      localStorage.setItem('searchEngineId', id);
+      setSearchEngineId(id);
+      toast({
+        title: "Search Engine ID Updated",
+        description: "Your Google Custom Search Engine ID has been updated",
+      });
     }
   };
 
@@ -183,10 +213,37 @@ const JobSearch = () => {
               </div>
             </div>
           </div>
+          {!searchEngineId && (
+            <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md text-sm">
+              <p className="text-amber-800 dark:text-amber-300">
+                Please set your Google Custom Search Engine ID to enable job searching.
+              </p>
+            </div>
+          )}
+          {searchEngineId && (
+            <div className="mt-4 flex justify-end">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={updateSearchEngineId}
+              >
+                Update Search Engine ID
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {searchResults.length > 0 && (
+      {isSearching && (
+        <div className="flex justify-center py-12">
+          <div className="flex flex-col items-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Searching for jobs...</p>
+          </div>
+        </div>
+      )}
+
+      {searchResults.length > 0 && !isSearching && (
         <div className="space-y-4 animate-fade-in">
           {searchResults.map((job) => (
             <Card key={job.id} className="overflow-hidden card-hover">

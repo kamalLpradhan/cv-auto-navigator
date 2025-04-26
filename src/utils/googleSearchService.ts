@@ -1,6 +1,5 @@
 
 const GOOGLE_API_KEY = 'AIzaSyCWiVxC_QLRNUIq6STBHBvbnelnMiD0IMM';
-const SEARCH_ENGINE_ID = ''; // You'll need to provide your Search Engine ID
 
 interface GoogleSearchResult {
   items?: {
@@ -17,11 +16,15 @@ interface GoogleSearchResult {
   }[];
 }
 
-export const searchJobs = async (query: string, location: string): Promise<any[]> => {
+export const searchJobs = async (query: string, location: string, searchEngineId: string): Promise<any[]> => {
   try {
+    if (!searchEngineId) {
+      throw new Error('Search Engine ID is required');
+    }
+    
     const searchQuery = `${query} jobs ${location}`.trim();
     const response = await fetch(
-      `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${encodeURIComponent(searchQuery)}`
+      `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}`
     );
 
     if (!response.ok) {
@@ -46,6 +49,6 @@ export const searchJobs = async (query: string, location: string): Promise<any[]
     }));
   } catch (error) {
     console.error('Google search error:', error);
-    return [];
+    throw error;
   }
 };
