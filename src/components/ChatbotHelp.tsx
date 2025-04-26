@@ -396,177 +396,177 @@ export default function ChatbotHelp() {
                 <TabsTrigger value="general" className="flex-1">General Chat</TabsTrigger>
                 <TabsTrigger value="jobsearch" className="flex-1">Job Search</TabsTrigger>
               </TabsList>
+            
+              <TabsContent value="general">
+                <ScrollArea className="p-4 max-h-[50vh]">
+                  <div className="flex flex-col gap-3">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${
+                          message.type === "user" ? "justify-end" : "justify-start"
+                        }`}
+                      >
+                        <div
+                          className={`max-w-[85%] rounded-lg px-3 py-2 ${
+                            message.type === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted"
+                          }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap">
+                            {message.text === "Thinking..." || message.text === "Searching for job information..." ? (
+                              <span className="flex items-center gap-2">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                {message.text}
+                              </span>
+                            ) : (
+                              message.text
+                            )}
+                          </p>
+                          <p className="text-xs opacity-70 mt-1">
+                            {message.timestamp.toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+
+                <DrawerFooter className="border-t pt-2">
+                  <div className="flex items-center gap-2">
+                    <Textarea
+                      placeholder="Type your question..."
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="flex-1 min-h-[50px] max-h-[150px]"
+                      disabled={isLoading || !apiKey}
+                    />
+                    <Button 
+                      size="icon" 
+                      onClick={handleSendMessage}
+                      disabled={!inputValue.trim() || isLoading || !apiKey}
+                      aria-label="Send message"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  {!apiKey && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Please set your Gemini API key to use the chatbot
+                    </p>
+                  )}
+                </DrawerFooter>
+              </TabsContent>
+              
+              <TabsContent value="jobsearch">
+                <div className="p-4">
+                  <div className="space-y-4 mb-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="job-role">Job Role</Label>
+                      <Input 
+                        id="job-role" 
+                        placeholder="E.g., Data Scientist, Marketing Manager" 
+                        value={jobRole}
+                        onChange={(e) => setJobRole(e.target.value)}
+                        onKeyDown={handleJobKeyDown}
+                        disabled={isLoading || !apiKey}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location (Optional)</Label>
+                      <Input 
+                        id="location" 
+                        placeholder="E.g., New York, Remote" 
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        onKeyDown={handleJobKeyDown}
+                        disabled={isLoading || !apiKey}
+                      />
+                    </div>
+                    <Button 
+                      className="w-full flex items-center gap-2" 
+                      onClick={searchForJobInfo}
+                      disabled={!jobRole.trim() || isLoading || !apiKey}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Search className="h-4 w-4" />
+                      )}
+                      Search Job Information
+                    </Button>
+                  </div>
+
+                  <div className="text-sm text-muted-foreground">
+                    <p>Enter a job role to get:</p>
+                    <ul className="list-disc list-inside mt-2 space-y-1">
+                      <li>Required skills and qualifications</li>
+                      <li>Salary range information</li>
+                      <li>CV keywords for this role</li>
+                      <li>Application tips</li>
+                      <li>Common interview questions</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <ScrollArea className="px-4 pb-4 max-h-[30vh]">
+                  <div className="flex flex-col gap-3">
+                    {messages.filter(msg => 
+                      msg.type === "user" && msg.text.includes("I am looking for") ||
+                      msg.type === "bot" && (
+                        messages.some(userMsg => 
+                          userMsg.type === "user" && 
+                          userMsg.text.includes("I am looking for") && 
+                          userMsg.timestamp < msg.timestamp
+                        )
+                      )
+                    ).map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${
+                          message.type === "user" ? "justify-end" : "justify-start"
+                        }`}
+                      >
+                        <div
+                          className={`max-w-[85%] rounded-lg px-3 py-2 ${
+                            message.type === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted"
+                          }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap">
+                            {message.text === "Searching for job information..." ? (
+                              <span className="flex items-center gap-2">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                {message.text}
+                              </span>
+                            ) : (
+                              message.text
+                            )}
+                          </p>
+                          <p className="text-xs opacity-70 mt-1">
+                            {message.timestamp.toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
             </Tabs>
           </DrawerHeader>
-
-          <TabsContent value="general" className="m-0">
-            <ScrollArea className="p-4 max-h-[50vh]">
-              <div className="flex flex-col gap-3">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${
-                      message.type === "user" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`max-w-[85%] rounded-lg px-3 py-2 ${
-                        message.type === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap">
-                        {message.text === "Thinking..." || message.text === "Searching for job information..." ? (
-                          <span className="flex items-center gap-2">
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            {message.text}
-                          </span>
-                        ) : (
-                          message.text
-                        )}
-                      </p>
-                      <p className="text-xs opacity-70 mt-1">
-                        {message.timestamp.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-
-            <DrawerFooter className="border-t pt-2">
-              <div className="flex items-center gap-2">
-                <Textarea
-                  placeholder="Type your question..."
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="flex-1 min-h-[50px] max-h-[150px]"
-                  disabled={isLoading || !apiKey}
-                />
-                <Button 
-                  size="icon" 
-                  onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || isLoading || !apiKey}
-                  aria-label="Send message"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              {!apiKey && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Please set your Gemini API key to use the chatbot
-                </p>
-              )}
-            </DrawerFooter>
-          </TabsContent>
-
-          <TabsContent value="jobsearch" className="m-0">
-            <div className="p-4">
-              <div className="space-y-4 mb-4">
-                <div className="space-y-2">
-                  <Label htmlFor="job-role">Job Role</Label>
-                  <Input 
-                    id="job-role" 
-                    placeholder="E.g., Data Scientist, Marketing Manager" 
-                    value={jobRole}
-                    onChange={(e) => setJobRole(e.target.value)}
-                    onKeyDown={handleJobKeyDown}
-                    disabled={isLoading || !apiKey}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location (Optional)</Label>
-                  <Input 
-                    id="location" 
-                    placeholder="E.g., New York, Remote" 
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    onKeyDown={handleJobKeyDown}
-                    disabled={isLoading || !apiKey}
-                  />
-                </div>
-                <Button 
-                  className="w-full flex items-center gap-2" 
-                  onClick={searchForJobInfo}
-                  disabled={!jobRole.trim() || isLoading || !apiKey}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Search className="h-4 w-4" />
-                  )}
-                  Search Job Information
-                </Button>
-              </div>
-
-              <div className="text-sm text-muted-foreground">
-                <p>Enter a job role to get:</p>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Required skills and qualifications</li>
-                  <li>Salary range information</li>
-                  <li>CV keywords for this role</li>
-                  <li>Application tips</li>
-                  <li>Common interview questions</li>
-                </ul>
-              </div>
-            </div>
-
-            <ScrollArea className="px-4 pb-4 max-h-[30vh]">
-              <div className="flex flex-col gap-3">
-                {messages.filter(msg => 
-                  msg.type === "user" && msg.text.includes("I am looking for") ||
-                  msg.type === "bot" && (
-                    messages.some(userMsg => 
-                      userMsg.type === "user" && 
-                      userMsg.text.includes("I am looking for") && 
-                      userMsg.timestamp < msg.timestamp
-                    )
-                  )
-                ).map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${
-                      message.type === "user" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`max-w-[85%] rounded-lg px-3 py-2 ${
-                        message.type === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap">
-                        {message.text === "Searching for job information..." ? (
-                          <span className="flex items-center gap-2">
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            {message.text}
-                          </span>
-                        ) : (
-                          message.text
-                        )}
-                      </p>
-                      <p className="text-xs opacity-70 mt-1">
-                        {message.timestamp.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </TabsContent>
         </DrawerContent>
       </Drawer>
 
