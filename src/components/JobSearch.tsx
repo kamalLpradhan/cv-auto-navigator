@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Search, BriefcaseBusiness, MapPin, Filter, CheckCircle, AlertCircle, Globe, Loader2, Clock } from 'lucide-react';
-import { applyToJob, fetchJobs } from '@/utils/applicationService';
+import { applyToJob } from '@/utils/applicationService';
 import { debounce } from 'lodash';
+import { searchJobs } from '@/utils/googleSearchService';
 
 // Job types for the interface
 interface Job {
@@ -34,17 +35,26 @@ const JobSearch = () => {
   const [isApplying, setIsApplying] = useState<Record<string, boolean>>({});
   const [appliedJobs, setAppliedJobs] = useState<Record<string, { success: boolean; message?: string }>>({});
   const { toast } = useToast();
+  const SEARCH_ENGINE_ID = '';
 
   const performSearch = useCallback(async (term: string, loc: string) => {
     if (!term && !loc) return;
     
     setIsSearching(true);
     try {
-      const effectiveSearchTerm = term || 'product manager, growth manager';
-      const googleJobs = await fetchGoogleJobs(effectiveSearchTerm, loc);
-      setSearchResults(googleJobs);
+      if (!SEARCH_ENGINE_ID) {
+        toast({
+          title: "Search Engine ID Required",
+          description: "Please set up your Google Custom Search Engine ID",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const searchResults = await searchJobs(term, loc);
+      setSearchResults(searchResults);
       
-      if (googleJobs.length === 0) {
+      if (searchResults.length === 0) {
         toast({
           title: "No jobs found",
           description: "Try adjusting your search criteria",
@@ -136,79 +146,6 @@ const JobSearch = () => {
     }
   };
 
-  const fetchGoogleJobs = async (searchTerm: string, location: string): Promise<Job[]> => {
-    const apiKey = localStorage.getItem("gemini_api_key");
-    
-    if (!apiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please set your Gemini API key in the chatbot settings.",
-        variant: "destructive",
-      });
-      return [];
-    }
-
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `Find job listings for ${searchTerm} ${location ? `in ${location}` : ''}. 
-                Provide a JSON response with an array of job details containing:
-                - id: unique identifier
-                - title: job title
-                - company: company name
-                - location: job location
-                - type: job type (Full-time, Part-time, Contract)
-                - description: brief job description
-                - skills: required skills
-                - postedDate: date of posting
-                - canAutoApply: whether auto-application is possible`
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 8192
-            }
-          }),
-        }
-      );
-
-      const data = await response.json();
-      const content = data.candidates[0]?.content?.parts[0]?.text || '[]';
-      
-      // Remove any potential code block markdown
-      const cleanContent = content.replace(/```json\n|```/g, '').trim();
-      
-      try {
-        const jobs = JSON.parse(cleanContent);
-        return jobs;
-      } catch (parseError) {
-        console.error("Failed to parse job data:", parseError);
-        toast({
-          title: "Job Search Error",
-          description: "Could not parse job listings. Please try a different search.",
-          variant: "destructive",
-        });
-        return [];
-      }
-    } catch (error) {
-      console.error("Job search error:", error);
-      toast({
-        title: "Job Search Error",
-        description: "An error occurred while searching for jobs. Please try again.",
-        variant: "destructive",
-      });
-      return [];
-    }
-  };
-
   return (
     <div className="w-full max-w-4xl mx-auto">
       <Card className="glass-panel mb-8">
@@ -294,9 +231,9 @@ const JobSearch = () => {
                           </span>
                         )}
                         
-                        {job.source === 'Google Jobs' && (
+                        {job.source === 'Google Search' && (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                            Google Jobs
+                            Google Search
                           </span>
                         )}
                       </div>
