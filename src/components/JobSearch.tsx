@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -77,6 +78,48 @@ const JobSearch = () => {
     debouncedSearch(searchTerm, location);
     return () => debouncedSearch.cancel();
   }, [searchTerm, location, debouncedSearch]);
+
+  // Add the missing handleApply function
+  const handleApply = async (job: Job) => {
+    // Set applying state for this job
+    setIsApplying(prev => ({ ...prev, [job.id]: true }));
+    
+    try {
+      // Use the applyToJob function from applicationService
+      const result = await applyToJob(job);
+      
+      // Update the applied jobs state
+      setAppliedJobs(prev => ({
+        ...prev,
+        [job.id]: { success: true }
+      }));
+      
+      // Show success toast
+      toast({
+        title: "Application Submitted",
+        description: `Your application for ${job.title} at ${job.company} was submitted successfully.`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Application error:", error);
+      
+      // Update the applied jobs state with error
+      setAppliedJobs(prev => ({
+        ...prev,
+        [job.id]: { success: false, message: "Failed to apply" }
+      }));
+      
+      // Show error toast
+      toast({
+        title: "Application Failed",
+        description: "There was an error submitting your application. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      // Reset applying state
+      setIsApplying(prev => ({ ...prev, [job.id]: false }));
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
