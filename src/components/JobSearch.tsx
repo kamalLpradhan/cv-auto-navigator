@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,18 +39,14 @@ const JobSearch = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  // Effect to get or prompt for Search Engine ID
+  // Effect to get Search Engine ID from localStorage or use default
   useEffect(() => {
     const storedSearchEngineId = localStorage.getItem('searchEngineId');
     if (storedSearchEngineId) {
       setSearchEngineId(storedSearchEngineId);
     } else {
-      // Show prompt to enter Search Engine ID
-      const id = prompt('Please enter your Google Custom Search Engine ID:');
-      if (id) {
-        localStorage.setItem('searchEngineId', id);
-        setSearchEngineId(id);
-      }
+      // Instead of prompting, we'll just use the default search engine ID from the service
+      setSearchEngineId('');
     }
   }, []);
 
@@ -60,15 +55,7 @@ const JobSearch = () => {
     
     setIsSearching(true);
     try {
-      if (!searchEngineId) {
-        toast({
-          title: "Search Engine ID Required",
-          description: "Please set up your Google Custom Search Engine ID",
-          variant: "destructive",
-        });
-        return;
-      }
-
+      // The searchJobs function will use the default search engine ID if none is provided
       const searchResults = await searchJobs(term, loc, searchEngineId);
       setSearchResults(searchResults);
       
@@ -213,24 +200,15 @@ const JobSearch = () => {
               </div>
             </div>
           </div>
-          {!searchEngineId && (
-            <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md text-sm">
-              <p className="text-amber-800 dark:text-amber-300">
-                Please set your Google Custom Search Engine ID to enable job searching.
-              </p>
-            </div>
-          )}
-          {searchEngineId && (
-            <div className="mt-4 flex justify-end">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={updateSearchEngineId}
-              >
-                Update Search Engine ID
-              </Button>
-            </div>
-          )}
+          <div className="mt-4 flex justify-end">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={updateSearchEngineId}
+            >
+              Customize Search Engine ID
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
