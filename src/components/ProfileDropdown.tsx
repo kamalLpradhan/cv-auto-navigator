@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, HelpCircle } from 'lucide-react';
+import { User, LogOut, Settings, HelpCircle, UserRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const ProfileDropdown = () => {
@@ -61,6 +61,10 @@ const ProfileDropdown = () => {
         <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer">
           <User className="mr-2 h-4 w-4" />
           <span>Dashboard</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+          <UserRound className="mr-2 h-4 w-4" />
+          <span>My Profile</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
           <Settings className="mr-2 h-4 w-4" />
