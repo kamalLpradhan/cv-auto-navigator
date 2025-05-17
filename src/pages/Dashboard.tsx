@@ -4,16 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import ApplicationTracker from '@/components/ApplicationTracker';
-import ApplicationStats from '@/components/ApplicationStats';
 import JobWebsiteTracker from '@/components/JobWebsiteTracker';
 import Header from '@/components/Header';
 import { Application } from '@/components/ApplicationTracker';
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { TargetIcon } from "lucide-react";
+import ApplicationTargetTracker from '@/components/ApplicationTargetTracker';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [hasApplications, setHasApplications] = useState(false);
   const [applications, setApplications] = useState<Application[]>([]);
   const { toast } = useToast();
+  const [targetDialogOpen, setTargetDialogOpen] = useState(false);
   
   useEffect(() => {
     // Check if CV is uploaded
@@ -136,8 +139,21 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <div className="animate-slide-up space-y-10">
-                  {/* Add the new ApplicationStats component */}
-                  <ApplicationStats applications={applications} />
+                  {/* Tracker Button */}
+                  <div className="flex justify-center mb-6">
+                    <Dialog open={targetDialogOpen} onOpenChange={setTargetDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="flex items-center gap-2">
+                          <TargetIcon className="h-4 w-4" />
+                          <span>Application Target Tracker</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+                        <ApplicationTargetTracker applications={applications} />
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+
                   <ApplicationTracker />
                   <JobWebsiteTracker />
                 </div>
