@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import ApplicationTracker from '@/components/ApplicationTracker';
+import ApplicationStats from '@/components/ApplicationStats';
 import JobWebsiteTracker from '@/components/JobWebsiteTracker';
 import Header from '@/components/Header';
 import { Application } from '@/components/ApplicationTracker';
@@ -11,6 +12,7 @@ import { Application } from '@/components/ApplicationTracker';
 const Dashboard = () => {
   const navigate = useNavigate();
   const [hasApplications, setHasApplications] = useState(false);
+  const [applications, setApplications] = useState<Application[]>([]);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -25,8 +27,10 @@ const Dashboard = () => {
     }
     
     // Check if there are any applications
-    const applications = localStorage.getItem('applications');
-    if (applications && JSON.parse(applications).length > 0) {
+    const savedApplications = localStorage.getItem('applications');
+    if (savedApplications && JSON.parse(savedApplications).length > 0) {
+      const parsedApplications = JSON.parse(savedApplications);
+      setApplications(parsedApplications);
       setHasApplications(true);
     } else {
       // Add sample applications data for demonstration
@@ -99,6 +103,7 @@ const Dashboard = () => {
       ];
       
       localStorage.setItem('applications', JSON.stringify(sampleApplications));
+      setApplications(sampleApplications);
       setHasApplications(true);
     }
   }, [toast]);
@@ -131,6 +136,8 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <div className="animate-slide-up space-y-10">
+                  {/* Add the new ApplicationStats component */}
+                  <ApplicationStats applications={applications} />
                   <ApplicationTracker />
                   <JobWebsiteTracker />
                 </div>
