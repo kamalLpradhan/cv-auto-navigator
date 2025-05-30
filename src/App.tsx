@@ -10,6 +10,7 @@ import Apply from "./pages/Apply";
 import Dashboard from "./pages/Dashboard";
 import Help from "./pages/Help";
 import Contact from "./pages/Contact";
+import Careers from "./pages/Careers";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Settings from "./pages/Settings";
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/help" element={<Help />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/careers" element={<Careers />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/settings" element={<Settings />} />
