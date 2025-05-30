@@ -2,7 +2,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 
 const Careers = () => {
   return (
@@ -45,30 +45,6 @@ const Careers = () => {
               </Card>
               
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Phone className="h-5 w-5" />
-                    Call Us
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Phone</h3>
-                    <p className="text-muted-foreground">
-                      +1 (555) 123-4567
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Office Hours</h3>
-                    <p className="text-muted-foreground">
-                      Mon-Fri: 9:00 AM - 5:00 PM PST
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="md:col-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MapPin className="h-5 w-5" />
