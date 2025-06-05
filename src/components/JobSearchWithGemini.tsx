@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Search, BriefcaseBusiness, MapPin, Sparkles, Loader2, Clock, Bot } from 'lucide-react';
+import { Search, BriefcaseBusiness, MapPin, Sparkles, Loader2, Clock, Bot, AlertCircle, Settings } from 'lucide-react';
 import { applyToJob } from '@/utils/applicationService';
 import { debounce } from 'lodash';
 import { searchJobs } from '@/utils/googleSearchService';
@@ -38,6 +37,8 @@ const JobSearchWithGemini = () => {
   const [appliedJobs, setAppliedJobs] = useState<Record<string, { success: boolean; message?: string }>>({});
   const [isAnalyzing, setIsAnalyzing] = useState<Record<string, boolean>>({});
   const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [searchEngineId, setSearchEngineId] = useState('');
+  const [showSearchError, setShowSearchError] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -46,7 +47,25 @@ const JobSearchWithGemini = () => {
     if (storedApiKey) {
       setGeminiApiKey(storedApiKey);
     }
+    
+    const storedSearchEngineId = localStorage.getItem('searchEngineId');
+    if (storedSearchEngineId) {
+      setSearchEngineId(storedSearchEngineId);
+    }
   }, []);
+
+  const updateSearchEngineId = () => {
+    const id = prompt('Please enter your Google Custom Search Engine ID (get one at https://cse.google.com/):', searchEngineId);
+    if (id) {
+      localStorage.setItem('searchEngineId', id);
+      setSearchEngineId(id);
+      setShowSearchError(false);
+      toast({
+        title: "Search Engine ID Updated",
+        description: "Your Google Custom Search Engine ID has been updated. Try searching again.",
+      });
+    }
+  };
 
   const analyzeJobWithGemini = async (job: Job) => {
     if (!geminiApiKey) {
@@ -134,8 +153,9 @@ const JobSearchWithGemini = () => {
     if (!term && !loc) return;
     
     setIsSearching(true);
+    setShowSearchError(false);
     try {
-      const searchResults = await searchJobs(term, loc);
+      const searchResults = await searchJobs(term, loc, searchEngineId);
       setSearchResults(searchResults);
       
       if (searchResults.length === 0) {
@@ -147,15 +167,26 @@ const JobSearchWithGemini = () => {
       }
     } catch (error) {
       console.error("Search error:", error);
-      toast({
-        title: "Search Error",
-        description: "An error occurred while searching for jobs. Please try again.",
-        variant: "destructive",
-      });
+      const errorMessage = error instanceof Error ? error.message : "An error occurred while searching for jobs";
+      
+      if (errorMessage.includes('Invalid Google Custom Search Engine ID')) {
+        setShowSearchError(true);
+        toast({
+          title: "Search Configuration Error",
+          description: "The Google Custom Search Engine ID is invalid. Please configure it below.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Search Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSearching(false);
     }
-  }, [toast]);
+  }, [toast, searchEngineId]);
 
   const debouncedSearch = useCallback(
     debounce((term: string, loc: string) => {
@@ -255,6 +286,32 @@ const JobSearchWithGemini = () => {
               </div>
             </div>
           </div>
+          
+          {showSearchError && (
+            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
+                    Search Configuration Required
+                  </h4>
+                  <p className="text-sm text-red-700 dark:text-red-300 mb-3">
+                    The default Google Custom Search Engine is not working. You need to set up your own:
+                  </p>
+                  <ol className="text-sm text-red-700 dark:text-red-300 mb-4 list-decimal list-inside space-y-1">
+                    <li>Go to <a href="https://cse.google.com/" target="_blank" rel="noopener noreferrer" className="underline">Google Custom Search</a></li>
+                    <li>Create a new search engine</li>
+                    <li>Add sites like linkedin.com, indeed.com, glassdoor.com</li>
+                    <li>Copy your Search Engine ID and paste it below</li>
+                  </ol>
+                  <Button onClick={updateSearchEngineId} size="sm" variant="outline">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configure Search Engine ID
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           
           {!geminiApiKey && (
             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">

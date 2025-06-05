@@ -15,6 +15,10 @@ interface GoogleSearchResult {
       }>;
     };
   }[];
+  error?: {
+    code: number;
+    message: string;
+  };
 }
 
 export const searchJobs = async (query: string, location: string, searchEngineId: string = DEFAULT_SEARCH_ENGINE_ID): Promise<any[]> => {
@@ -23,7 +27,7 @@ export const searchJobs = async (query: string, location: string, searchEngineId
     const finalSearchEngineId = searchEngineId || DEFAULT_SEARCH_ENGINE_ID;
     
     if (!finalSearchEngineId) {
-      throw new Error('Search Engine ID is required');
+      throw new Error('Search Engine ID is required. Please configure your Google Custom Search Engine ID.');
     }
     
     const searchQuery = `${query} jobs ${location}`.trim();
@@ -31,11 +35,19 @@ export const searchJobs = async (query: string, location: string, searchEngineId
       `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${finalSearchEngineId}&q=${encodeURIComponent(searchQuery)}`
     );
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch search results');
+    const data: GoogleSearchResult = await response.json();
+    
+    // Check for API errors in the response
+    if (data.error) {
+      if (data.error.code === 400 && data.error.message.includes('invalid argument')) {
+        throw new Error('Invalid Google Custom Search Engine ID. Please check your configuration or set up a new Custom Search Engine at https://cse.google.com/');
+      }
+      throw new Error(`Google API Error: ${data.error.message}`);
     }
 
-    const data: GoogleSearchResult = await response.json();
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+    }
     
     return (data.items || []).map(item => ({
       id: Math.random().toString(36).substr(2, 9),
