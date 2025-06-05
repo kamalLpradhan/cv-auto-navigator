@@ -55,10 +55,24 @@ const JobSearchWithGemini = () => {
   }, []);
 
   const updateSearchEngineId = () => {
-    const id = prompt('Please enter your Google Custom Search Engine ID (get one at https://cse.google.com/):', searchEngineId);
-    if (id) {
-      localStorage.setItem('searchEngineId', id);
-      setSearchEngineId(id);
+    const instructionText = `Please enter your Google Custom Search Engine ID.
+
+Instructions:
+1. Go to https://cse.google.com/
+2. Click "Add" to create a new search engine
+3. Add sites like: linkedin.com/jobs/*, indeed.com/*, glassdoor.com/*, jobs.google.com/*
+4. After creating, go to "Setup" → "Basic" 
+5. Copy the "Search engine ID" (looks like: 017576662512468239146:omuauf_lfve)
+6. Paste ONLY the ID below (not the HTML embed code)
+
+Current ID: ${searchEngineId}`;
+
+    const id = prompt(instructionText, searchEngineId);
+    if (id !== null) { // User didn't cancel
+      // Clean the input in case they pasted HTML
+      const cleanedId = id.replace(/[^a-zA-Z0-9:_-]/g, '');
+      localStorage.setItem('searchEngineId', cleanedId);
+      setSearchEngineId(cleanedId);
       setShowSearchError(false);
       toast({
         title: "Search Engine ID Updated",
@@ -169,7 +183,9 @@ const JobSearchWithGemini = () => {
       console.error("Search error:", error);
       const errorMessage = error instanceof Error ? error.message : "An error occurred while searching for jobs";
       
-      if (errorMessage.includes('Invalid Google Custom Search Engine ID')) {
+      if (errorMessage.includes('Invalid Google Custom Search Engine ID') || 
+          errorMessage.includes('invalid argument') ||
+          errorMessage.includes('Invalid Value')) {
         setShowSearchError(true);
         toast({
           title: "Search Configuration Error",
@@ -296,13 +312,14 @@ const JobSearchWithGemini = () => {
                     Search Configuration Required
                   </h4>
                   <p className="text-sm text-red-700 dark:text-red-300 mb-3">
-                    The default Google Custom Search Engine is not working. You need to set up your own:
+                    The Google Custom Search Engine ID is invalid or not working. You need to set up your own:
                   </p>
                   <ol className="text-sm text-red-700 dark:text-red-300 mb-4 list-decimal list-inside space-y-1">
                     <li>Go to <a href="https://cse.google.com/" target="_blank" rel="noopener noreferrer" className="underline">Google Custom Search</a></li>
                     <li>Create a new search engine</li>
-                    <li>Add sites like linkedin.com, indeed.com, glassdoor.com</li>
-                    <li>Copy your Search Engine ID and paste it below</li>
+                    <li>Add job sites: linkedin.com/jobs/*, indeed.com/*, glassdoor.com/*, jobs.google.com/*</li>
+                    <li>Copy your Search Engine ID (NOT the HTML embed code)</li>
+                    <li>Paste it using the button below</li>
                   </ol>
                   <Button onClick={updateSearchEngineId} size="sm" variant="outline">
                     <Settings className="mr-2 h-4 w-4" />
