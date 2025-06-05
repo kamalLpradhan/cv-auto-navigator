@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
-import JobSearch from "@/components/JobSearch";
+import JobSearchWithGemini from "@/components/JobSearchWithGemini";
 import Header from "@/components/Header";
 import { CircleCheck, FileWarning } from "lucide-react";
 
@@ -138,7 +138,7 @@ const Apply = () => {
                     </div>
                   </div>
                   
-                  <JobSearch />
+                  <JobSearchWithGemini />
                 </div>
               )}
             </div>
