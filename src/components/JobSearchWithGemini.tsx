@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Search, BriefcaseBusiness, MapPin, Sparkles, Loader2, Clock, Bot, AlertCircle, Settings } from 'lucide-react';
+import { Search, BriefcaseBusiness, MapPin, Sparkles, Loader2, Clock, Bot, AlertCircle, Settings, TrendingUp, Target } from 'lucide-react';
 import { applyToJob } from '@/utils/applicationService';
 import { debounce } from 'lodash';
 import { searchJobs } from '@/utils/googleSearchService';
+import { analyzeCVJobMatch } from '@/utils/cvAnalysisService';
 import { useAuth } from '@/providers/AuthProvider';
 
 interface Job {
@@ -26,6 +27,16 @@ interface Job {
   sourceId?: string;
   applyUrl?: string;
   geminiAnalysis?: string;
+  cvMatchAnalysis?: {
+    matchPercentage: number;
+    strengths: string[];
+    gaps: string[];
+    improvements: string[];
+    keywordsMatch: {
+      matched: string[];
+      missing: string[];
+    };
+  };
 }
 
 const JobSearchWithGemini = () => {
@@ -36,9 +47,11 @@ const JobSearchWithGemini = () => {
   const [isApplying, setIsApplying] = useState<Record<string, boolean>>({});
   const [appliedJobs, setAppliedJobs] = useState<Record<string, { success: boolean; message?: string }>>({});
   const [isAnalyzing, setIsAnalyzing] = useState<Record<string, boolean>>({});
+  const [isCVAnalyzing, setIsCVAnalyzing] = useState<Record<string, boolean>>({});
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [searchEngineId, setSearchEngineId] = useState('');
   const [showSearchError, setShowSearchError] = useState(false);
+  const [autoAnalyzeCV, setAutoAnalyzeCV] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -163,6 +176,61 @@ Current ID: ${searchEngineId}`;
     }
   };
 
+  const analyzeCVMatch = async (job: Job) => {
+    if (!geminiApiKey) {
+      toast({
+        title: "Gemini API Key Required",
+        description: "Please set your Gemini API key in the chatbot settings",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const cvData = localStorage.getItem('cv');
+    if (!cvData) {
+      toast({
+        title: "CV Not Found",
+        description: "Please upload your CV to get match analysis",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCVAnalyzing(prev => ({ ...prev, [job.id]: true }));
+
+    try {
+      const parsedCV = JSON.parse(cvData);
+      const analysis = await analyzeCVJobMatch(
+        job.description,
+        job.title,
+        parsedCV,
+        geminiApiKey
+      );
+
+      setSearchResults(prev => 
+        prev.map(j => 
+          j.id === job.id 
+            ? { ...j, cvMatchAnalysis: analysis }
+            : j
+        )
+      );
+
+      toast({
+        title: "CV Match Analysis Complete",
+        description: `${analysis.matchPercentage}% match with this position`,
+      });
+    } catch (error) {
+      console.error("Error analyzing CV match:", error);
+      toast({
+        title: "CV Analysis Failed",
+        description: "Failed to analyze CV match with this job",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCVAnalyzing(prev => ({ ...prev, [job.id]: false }));
+    }
+  };
+
   const performSearch = useCallback(async (term: string, loc: string) => {
     if (!term && !loc) return;
     
@@ -177,6 +245,11 @@ Current ID: ${searchEngineId}`;
           title: "No jobs found",
           description: "Try adjusting your search criteria",
           variant: "default",
+        });
+      } else if (autoAnalyzeCV && geminiApiKey && localStorage.getItem('cv')) {
+        // Auto-analyze CV match for first 3 jobs
+        searchResults.slice(0, 3).forEach(job => {
+          setTimeout(() => analyzeCVMatch(job), Math.random() * 2000);
         });
       }
     } catch (error) {
@@ -202,7 +275,7 @@ Current ID: ${searchEngineId}`;
     } finally {
       setIsSearching(false);
     }
-  }, [toast, searchEngineId]);
+  }, [toast, searchEngineId, autoAnalyzeCV, geminiApiKey]);
 
   const debouncedSearch = useCallback(
     debounce((term: string, loc: string) => {
@@ -263,6 +336,12 @@ Current ID: ${searchEngineId}`;
     } else {
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
+  };
+
+  const getMatchColor = (percentage: number) => {
+    if (percentage >= 80) return 'text-green-600 dark:text-green-400';
+    if (percentage >= 60) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
   };
 
   return (
@@ -333,8 +412,25 @@ Current ID: ${searchEngineId}`;
           {!geminiApiKey && (
             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                💡 Set your Gemini API key in the chatbot (bottom-right) to get AI-powered job analysis
+                💡 Set your Gemini API key in the chatbot (bottom-right) to get AI-powered job analysis and CV matching
               </p>
+            </div>
+          )}
+
+          {geminiApiKey && localStorage.getItem('cv') && (
+            <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-green-800 dark:text-green-200">
+                  🎯 Auto CV-Job matching is enabled for better job recommendations
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAutoAnalyzeCV(!autoAnalyzeCV)}
+                >
+                  {autoAnalyzeCV ? 'Disable' : 'Enable'} Auto-Analysis
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
@@ -374,32 +470,68 @@ Current ID: ${searchEngineId}`;
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                           {job.type}
                         </span>
+
+                        {job.cvMatchAnalysis && (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 ${getMatchColor(job.cvMatchAnalysis.matchPercentage)}`}>
+                            <Target className="mr-1 h-3 w-3" />
+                            {job.cvMatchAnalysis.matchPercentage}% CV Match
+                          </span>
+                        )}
                         
                         {geminiApiKey && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => analyzeJobWithGemini(job)}
-                            disabled={isAnalyzing[job.id] || !!job.geminiAnalysis}
-                            className="h-6 text-xs"
-                          >
-                            {isAnalyzing[job.id] ? (
-                              <>
-                                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                                Analyzing...
-                              </>
-                            ) : job.geminiAnalysis ? (
-                              <>
-                                <Bot className="mr-1 h-3 w-3" />
-                                AI Analyzed
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="mr-1 h-3 w-3" />
-                                Analyze with AI
-                              </>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => analyzeJobWithGemini(job)}
+                              disabled={isAnalyzing[job.id] || !!job.geminiAnalysis}
+                              className="h-6 text-xs"
+                            >
+                              {isAnalyzing[job.id] ? (
+                                <>
+                                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                  Analyzing...
+                                </>
+                              ) : job.geminiAnalysis ? (
+                                <>
+                                  <Bot className="mr-1 h-3 w-3" />
+                                  AI Analyzed
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="mr-1 h-3 w-3" />
+                                  Analyze Job
+                                </>
+                              )}
+                            </Button>
+
+                            {localStorage.getItem('cv') && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => analyzeCVMatch(job)}
+                                disabled={isCVAnalyzing[job.id] || !!job.cvMatchAnalysis}
+                                className="h-6 text-xs"
+                              >
+                                {isCVAnalyzing[job.id] ? (
+                                  <>
+                                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                    Matching...
+                                  </>
+                                ) : job.cvMatchAnalysis ? (
+                                  <>
+                                    <TrendingUp className="mr-1 h-3 w-3" />
+                                    CV Matched
+                                  </>
+                                ) : (
+                                  <>
+                                    <Target className="mr-1 h-3 w-3" />
+                                    Match CV
+                                  </>
+                                )}
+                              </Button>
                             )}
-                          </Button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -434,6 +566,46 @@ Current ID: ${searchEngineId}`;
                   
                   <div className="text-sm text-muted-foreground">
                     <p className="mb-3">{job.description}</p>
+                    
+                    {job.cvMatchAnalysis && (
+                      <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Target className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                          <span className="font-medium text-purple-800 dark:text-purple-300">
+                            CV Match Analysis ({job.cvMatchAnalysis.matchPercentage}% Match)
+                          </span>
+                        </div>
+                        
+                        <div className="grid md:grid-cols-2 gap-4 text-xs">
+                          <div>
+                            <h4 className="font-medium text-green-700 dark:text-green-300 mb-1">✅ Strengths</h4>
+                            <ul className="list-disc list-inside space-y-1 text-green-600 dark:text-green-400">
+                              {job.cvMatchAnalysis.strengths.map((strength, i) => (
+                                <li key={i}>{strength}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-medium text-red-700 dark:text-red-300 mb-1">⚠️ Gaps</h4>
+                            <ul className="list-disc list-inside space-y-1 text-red-600 dark:text-red-400">
+                              {job.cvMatchAnalysis.gaps.map((gap, i) => (
+                                <li key={i}>{gap}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div className="md:col-span-2">
+                            <h4 className="font-medium text-blue-700 dark:text-blue-300 mb-1">💡 Improvements</h4>
+                            <ul className="list-disc list-inside space-y-1 text-blue-600 dark:text-blue-400">
+                              {job.cvMatchAnalysis.improvements.map((improvement, i) => (
+                                <li key={i}>{improvement}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     {job.geminiAnalysis && (
                       <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
