@@ -199,6 +199,7 @@ Current ID: ${searchEngineId}`;
     setIsCVAnalyzing(prev => ({ ...prev, [job.id]: true }));
 
     try {
+      console.log('Starting CV match analysis for job:', job.title);
       const parsedCV = JSON.parse(cvData);
       const analysis = await analyzeCVJobMatch(
         job.description,
@@ -221,11 +222,26 @@ Current ID: ${searchEngineId}`;
       });
     } catch (error) {
       console.error("Error analyzing CV match:", error);
+      
+      // Provide specific error feedback
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      
       toast({
         title: "CV Analysis Failed",
-        description: "Failed to analyze CV match with this job",
+        description: errorMessage,
         variant: "destructive",
       });
+
+      // If it's an API key issue, provide additional guidance
+      if (errorMessage.includes('API key')) {
+        setTimeout(() => {
+          toast({
+            title: "API Key Help",
+            description: "Get your free Gemini API key from Google AI Studio and add it in the chatbot settings",
+            variant: "default",
+          });
+        }, 3000);
+      }
     } finally {
       setIsCVAnalyzing(prev => ({ ...prev, [job.id]: false }));
     }
