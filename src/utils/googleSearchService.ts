@@ -1,6 +1,5 @@
-
 const GOOGLE_API_KEY = 'AIzaSyCWiVxC_QLRNUIq6STBHBvbnelnMiD0IMM';
-const DEFAULT_SEARCH_ENGINE_ID = '136d9854244734739'; // Default search engine ID
+const DEFAULT_SEARCH_ENGINE_ID = '51ad170dce0d9478c'; // Updated with your search engine ID
 
 interface GoogleSearchResult {
   items?: {

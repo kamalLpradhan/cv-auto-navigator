@@ -61,10 +61,10 @@ const JobSearchWithGemini = () => {
       setGeminiApiKey(storedApiKey);
     }
     
-    const storedSearchEngineId = localStorage.getItem('searchEngineId');
-    if (storedSearchEngineId) {
-      setSearchEngineId(storedSearchEngineId);
-    }
+    // Set the search engine ID from your configuration
+    const yourSearchEngineId = '51ad170dce0d9478c';
+    localStorage.setItem('searchEngineId', yourSearchEngineId);
+    setSearchEngineId(yourSearchEngineId);
   }, []);
 
   const updateSearchEngineId = () => {
