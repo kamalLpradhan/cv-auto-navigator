@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,8 +29,7 @@ const ApplicationTracker = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   
-  useEffect(() => {
-    // Load applications from localStorage for demo purposes
+  const loadApplications = () => {
     const savedApplications = JSON.parse(localStorage.getItem('applications') || '[]');
     
     // Add unique IDs if they don't exist
@@ -42,6 +40,31 @@ const ApplicationTracker = () => {
     
     setApplications(appsWithIds);
     setFilteredApplications(appsWithIds);
+  };
+  
+  useEffect(() => {
+    // Load applications initially
+    loadApplications();
+    
+    // Listen for storage changes to detect new applications
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'applications') {
+        loadApplications();
+      }
+    };
+    
+    // Listen for custom events when applications are added
+    const handleApplicationAdded = () => {
+      loadApplications();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('applicationAdded', handleApplicationAdded);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('applicationAdded', handleApplicationAdded);
+    };
   }, []);
   
   useEffect(() => {
