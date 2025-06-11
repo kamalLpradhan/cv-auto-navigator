@@ -58,14 +58,25 @@ const JobSearchWithGemini = () => {
   useEffect(() => {
     const storedApiKey = localStorage.getItem("gemini_api_key");
     if (storedApiKey) {
-      setGeminiApiKey(storedApiKey);
+      // Clean any invalid API key formats
+      if (storedApiKey.includes('curl') || storedApiKey.includes('http')) {
+        localStorage.removeItem("gemini_api_key");
+        setGeminiApiKey('');
+        toast({
+          title: "Invalid API Key Detected",
+          description: "Please enter a valid Gemini API key from Google AI Studio",
+          variant: "destructive",
+        });
+      } else {
+        setGeminiApiKey(storedApiKey);
+      }
     }
     
     // Set the search engine ID from your configuration
     const yourSearchEngineId = '51ad170dce0d9478c';
     localStorage.setItem('searchEngineId', yourSearchEngineId);
     setSearchEngineId(yourSearchEngineId);
-  }, []);
+  }, [toast]);
 
   const updateSearchEngineId = () => {
     const instructionText = `Please enter your Google Custom Search Engine ID.
@@ -180,7 +191,17 @@ Current ID: ${searchEngineId}`;
     if (!geminiApiKey) {
       toast({
         title: "Gemini API Key Required",
-        description: "Please set your Gemini API key in the chatbot settings",
+        description: "Please set your Gemini API key in the chatbot settings to enable CV analysis",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate API key format before attempting analysis
+    if (geminiApiKey.includes('curl') || geminiApiKey.includes('http') || geminiApiKey.length < 30) {
+      toast({
+        title: "Invalid API Key Format",
+        description: "Please enter a valid Gemini API key from Google AI Studio",
         variant: "destructive",
       });
       return;
@@ -217,13 +238,12 @@ Current ID: ${searchEngineId}`;
       );
 
       toast({
-        title: "CV Match Analysis Complete",
+        title: "CV Analysis Complete",
         description: `${analysis.matchPercentage}% match with this position`,
       });
     } catch (error) {
       console.error("Error analyzing CV match:", error);
       
-      // Provide specific error feedback
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       
       toast({
@@ -232,12 +252,12 @@ Current ID: ${searchEngineId}`;
         variant: "destructive",
       });
 
-      // If it's an API key issue, provide additional guidance
-      if (errorMessage.includes('API key')) {
+      // If it's an API key issue, provide guidance
+      if (errorMessage.includes('API key') || errorMessage.includes('Invalid')) {
         setTimeout(() => {
           toast({
             title: "API Key Help",
-            description: "Get your free Gemini API key from Google AI Studio and add it in the chatbot settings",
+            description: "Get your free Gemini API key from Google AI Studio (aistudio.google.com) and add it in the chatbot settings",
             variant: "default",
           });
         }, 3000);
