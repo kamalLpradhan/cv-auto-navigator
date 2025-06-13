@@ -5,7 +5,7 @@ export const applyToJob = async (job: any): Promise<void> => {
   // Get existing applications
   const existingApplications = JSON.parse(localStorage.getItem('applications') || '[]');
   
-  // Create new application
+  // Create new application with better data structure
   const newApplication: Application = {
     id: Math.random().toString(36).substring(2, 15),
     jobId: job.id,
@@ -28,12 +28,28 @@ export const applyToJob = async (job: any): Promise<void> => {
   // Save to localStorage
   localStorage.setItem('applications', JSON.stringify(updatedApplications));
   
-  // Trigger custom event to notify components
-  const event = new CustomEvent('applicationAdded', {
+  // Trigger multiple events to ensure all components update
+  const applicationAddedEvent = new CustomEvent('applicationAdded', {
     detail: newApplication
   });
-  window.dispatchEvent(event);
+  
+  const storageUpdateEvent = new StorageEvent('storage', {
+    key: 'applications',
+    newValue: JSON.stringify(updatedApplications),
+    oldValue: JSON.stringify(existingApplications),
+    url: window.location.href
+  });
+  
+  // Dispatch both events
+  window.dispatchEvent(applicationAddedEvent);
+  window.dispatchEvent(storageUpdateEvent);
+  
+  // Also trigger a custom refresh event
+  const refreshEvent = new CustomEvent('applicationsRefresh');
+  window.dispatchEvent(refreshEvent);
+  
+  console.log('Application added successfully:', newApplication);
   
   // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise(resolve => setTimeout(resolve, 500));
 };

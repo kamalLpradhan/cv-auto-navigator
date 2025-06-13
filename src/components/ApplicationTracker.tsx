@@ -38,6 +38,7 @@ const ApplicationTracker = () => {
       id: app.id || Math.random().toString(36).substring(2, 15),
     }));
     
+    console.log('Loading applications:', appsWithIds.length);
     setApplications(appsWithIds);
     setFilteredApplications(appsWithIds);
   };
@@ -49,23 +50,45 @@ const ApplicationTracker = () => {
     // Listen for storage changes to detect new applications
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'applications') {
+        console.log('Storage changed, reloading applications');
         loadApplications();
       }
     };
     
     // Listen for custom events when applications are added
-    const handleApplicationAdded = () => {
+    const handleApplicationAdded = (e: CustomEvent) => {
+      console.log('Application added event received:', e.detail);
       loadApplications();
     };
     
+    // Listen for refresh events
+    const handleApplicationsRefresh = () => {
+      console.log('Applications refresh event received');
+      loadApplications();
+    };
+    
+    // Add all event listeners
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('applicationAdded', handleApplicationAdded);
+    window.addEventListener('applicationAdded', handleApplicationAdded as EventListener);
+    window.addEventListener('applicationsRefresh', handleApplicationsRefresh);
+    
+    // Set up a periodic refresh to ensure data consistency
+    const refreshInterval = setInterval(() => {
+      const currentCount = applications.length;
+      const storageCount = JSON.parse(localStorage.getItem('applications') || '[]').length;
+      if (currentCount !== storageCount) {
+        console.log('Application count mismatch, refreshing');
+        loadApplications();
+      }
+    }, 2000);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('applicationAdded', handleApplicationAdded);
+      window.removeEventListener('applicationAdded', handleApplicationAdded as EventListener);
+      window.removeEventListener('applicationsRefresh', handleApplicationsRefresh);
+      clearInterval(refreshInterval);
     };
-  }, []);
+  }, [applications.length]);
   
   useEffect(() => {
     // Filter applications based on search term and active tab
