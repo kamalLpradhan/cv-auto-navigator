@@ -18,6 +18,23 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [targetDialogOpen, setTargetDialogOpen] = useState(false);
   
+  const loadApplications = () => {
+    const savedApplications = JSON.parse(localStorage.getItem('applications') || '[]');
+    
+    // Add unique IDs if they don't exist
+    const appsWithIds = savedApplications.map((app: Application) => ({
+      ...app,
+      id: app.id || Math.random().toString(36).substring(2, 15),
+    }));
+    
+    console.log('Dashboard - Loading applications:', appsWithIds.length);
+    setApplications(appsWithIds);
+    
+    if (appsWithIds.length > 0) {
+      setHasApplications(true);
+    }
+  };
+  
   useEffect(() => {
     // Check if CV is uploaded
     const cv = localStorage.getItem('cv');
@@ -29,14 +46,43 @@ const Dashboard = () => {
       });
     }
     
-    // Check if there are any applications
-    const savedApplications = localStorage.getItem('applications');
-    if (savedApplications && JSON.parse(savedApplications).length > 0) {
-      const parsedApplications = JSON.parse(savedApplications);
-      setApplications(parsedApplications);
-      setHasApplications(true);
-    } else {
-      // Add sample applications data for demonstration
+    // Load applications initially
+    loadApplications();
+    
+    // Listen for application updates
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'applications') {
+        console.log('Dashboard - Storage changed, reloading applications');
+        loadApplications();
+      }
+    };
+    
+    const handleApplicationAdded = (e: CustomEvent) => {
+      console.log('Dashboard - Application added event received:', e.detail);
+      loadApplications();
+    };
+    
+    const handleApplicationsRefresh = () => {
+      console.log('Dashboard - Applications refresh event received');
+      loadApplications();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('applicationAdded', handleApplicationAdded as EventListener);
+    window.addEventListener('applicationsRefresh', handleApplicationsRefresh);
+    
+    // Periodic refresh to ensure data consistency
+    const refreshInterval = setInterval(() => {
+      const currentCount = applications.length;
+      const storageCount = JSON.parse(localStorage.getItem('applications') || '[]').length;
+      if (currentCount !== storageCount) {
+        console.log('Dashboard - Application count mismatch, refreshing');
+        loadApplications();
+      }
+    }, 2000);
+    
+    // If no applications exist, add sample data
+    if (!hasApplications) {
       const sampleApplications: Application[] = [
         {
           id: "app1",
@@ -109,7 +155,14 @@ const Dashboard = () => {
       setApplications(sampleApplications);
       setHasApplications(true);
     }
-  }, [toast]);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('applicationAdded', handleApplicationAdded as EventListener);
+      window.removeEventListener('applicationsRefresh', handleApplicationsRefresh);
+      clearInterval(refreshInterval);
+    };
+  }, [toast, hasApplications, applications.length]);
   
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-slate-50 dark:from-background dark:to-background/70">
@@ -128,7 +181,7 @@ const Dashboard = () => {
                 </p>
               </div>
               
-              {!hasApplications ? (
+              {!hasApplications || applications.length === 0 ? (
                 <div className="text-center py-12 animate-fade-in">
                   <p className="text-muted-foreground mb-6">
                     You haven't applied to any jobs yet. Start your job search to see applications here.
@@ -145,7 +198,7 @@ const Dashboard = () => {
                       <DialogTrigger asChild>
                         <Button variant="outline" className="flex items-center gap-2">
                           <TargetIcon className="h-4 w-4" />
-                          <span>Application Target Tracker</span>
+                          <span>Application Target Tracker ({applications.length} applications)</span>
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
