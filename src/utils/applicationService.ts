@@ -5,7 +5,10 @@ export const applyToJob = async (job: any): Promise<void> => {
   // Get existing applications
   const existingApplications = JSON.parse(localStorage.getItem('applications') || '[]');
   
-  // Create new application with better data structure
+  // Get user profile information
+  const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+  
+  // Create new application with better data structure and user profile info
   const newApplication: Application = {
     id: Math.random().toString(36).substring(2, 15),
     jobId: job.id,
@@ -19,7 +22,15 @@ export const applyToJob = async (job: any): Promise<void> => {
     sourceId: job.sourceId || job.id,
     contactEmail: job.contactEmail,
     contactName: job.contactName,
-    contactLinkedIn: job.contactLinkedIn
+    contactLinkedIn: job.contactLinkedIn,
+    // Add user profile information to the application
+    userLinkedIn: userProfile.linkedinProfile,
+    userGithub: userProfile.githubProfile,
+    userPortfolio: userProfile.portfolioWebsite,
+    userTwitter: userProfile.twitterProfile,
+    userIndeed: userProfile.indeedProfile,
+    userGlassdoor: userProfile.glassdoorProfile,
+    appliedVia: determineApplicationSource(job, userProfile)
   };
   
   // Add to existing applications
@@ -48,8 +59,25 @@ export const applyToJob = async (job: any): Promise<void> => {
   const refreshEvent = new CustomEvent('applicationsRefresh');
   window.dispatchEvent(refreshEvent);
   
-  console.log('Application added successfully:', newApplication);
+  console.log('Application added successfully with profile info:', newApplication);
   
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
+};
+
+// Helper function to determine which profile was used for application
+const determineApplicationSource = (job: any, userProfile: any): string => {
+  if (job.source === 'LinkedIn Jobs' && userProfile.linkedinProfile) {
+    return `Applied via LinkedIn (${userProfile.linkedinProfile})`;
+  }
+  if (job.source === 'Indeed' && userProfile.indeedProfile) {
+    return `Applied via Indeed (${userProfile.indeedProfile})`;
+  }
+  if (job.source === 'Glassdoor' && userProfile.glassdoorProfile) {
+    return `Applied via Glassdoor (${userProfile.glassdoorProfile})`;
+  }
+  if (userProfile.portfolioWebsite) {
+    return `Applied with portfolio: ${userProfile.portfolioWebsite}`;
+  }
+  return 'Applied directly';
 };

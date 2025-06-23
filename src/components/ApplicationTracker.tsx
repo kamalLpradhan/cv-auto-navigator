@@ -21,6 +21,14 @@ export interface Application {
   contactName?: string;
   source?: string;
   sourceId?: string;
+  // New profile tracking fields
+  userLinkedIn?: string;
+  userGithub?: string;
+  userPortfolio?: string;
+  userTwitter?: string;
+  userIndeed?: string;
+  userGlassdoor?: string;
+  appliedVia?: string;
 }
 
 const ApplicationTracker = () => {
@@ -38,7 +46,7 @@ const ApplicationTracker = () => {
       id: app.id || Math.random().toString(36).substring(2, 15),
     }));
     
-    console.log('Loading applications:', appsWithIds.length);
+    console.log('Loading applications with profile tracking:', appsWithIds.length);
     setApplications(appsWithIds);
     setFilteredApplications(appsWithIds);
   };
@@ -99,7 +107,8 @@ const ApplicationTracker = () => {
       filtered = filtered.filter(app => 
         app.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
         app.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (app.source && app.source.toLowerCase().includes(searchTerm.toLowerCase()))
+        (app.source && app.source.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (app.appliedVia && app.appliedVia.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
@@ -124,6 +133,10 @@ const ApplicationTracker = () => {
         app.jobTitle.toLowerCase().includes('growth') || 
         app.position?.toLowerCase().includes('growth')
       );
+    } else if (activeTab === 'with-profiles') {
+      filtered = filtered.filter(app => 
+        app.userLinkedIn || app.userGithub || app.userPortfolio || app.userTwitter || app.userIndeed || app.userGlassdoor
+      );
     }
     
     setFilteredApplications(filtered);
@@ -143,8 +156,11 @@ const ApplicationTracker = () => {
       app.jobTitle.toLowerCase().includes('growth') || 
       app.position?.toLowerCase().includes('growth')
     ).length;
+    const withProfiles = applications.filter(app => 
+      app.userLinkedIn || app.userGithub || app.userPortfolio || app.userTwitter || app.userIndeed || app.userGlassdoor
+    ).length;
     
-    return { autoApplied, manual, failed, google, linkedin, product, growth, total: applications.length };
+    return { autoApplied, manual, failed, google, linkedin, product, growth, withProfiles, total: applications.length };
   };
   
   const counts = getStatusCounts();
@@ -170,11 +186,11 @@ const ApplicationTracker = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Growth Manager Jobs</p>
-                <h3 className="text-3xl font-bold mt-1">{counts.growth}</h3>
+                <p className="text-sm font-medium text-muted-foreground">With Profile Data</p>
+                <h3 className="text-3xl font-bold mt-1">{counts.withProfiles}</h3>
               </div>
-              <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <Briefcase className="text-purple-600 dark:text-purple-400" size={22} />
+              <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <Globe className="text-green-600 dark:text-green-400" size={22} />
               </div>
             </div>
           </CardContent>
@@ -224,18 +240,19 @@ const ApplicationTracker = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4 flex flex-wrap">
               <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="with-profiles">
+                <span className="flex items-center gap-1">
+                  With Profiles
+                  <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    {counts.withProfiles}
+                  </span>
+                </span>
+              </TabsTrigger>
               <TabsTrigger value="auto">Auto-Applied</TabsTrigger>
               <TabsTrigger value="product">Product Manager</TabsTrigger>
               <TabsTrigger value="growth">Growth</TabsTrigger>
               <TabsTrigger value="google">Google Jobs</TabsTrigger>
-              <TabsTrigger value="linkedin">
-                <span className="flex items-center gap-1">
-                  LinkedIn
-                  <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                    New
-                  </span>
-                </span>
-              </TabsTrigger>
+              <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
               <TabsTrigger value="failed">Failed</TabsTrigger>
             </TabsList>
             
