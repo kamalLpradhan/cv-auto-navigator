@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,9 +14,12 @@ import {
   CheckCircle,
   BriefcaseBusiness,
   Zap,
-  Linkedin
+  Linkedin,
+  RefreshCw
 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { JobSearchService } from '@/utils/jobSearchService';
+import JobResultsDisplay from './JobResultsDisplay';
 
 export interface JobWebsite {
   id: string;
@@ -40,6 +42,8 @@ const JobWebsiteTracker = () => {
     position: '',
     linkedInGroupUrl: ''
   });
+  const [jobResults, setJobResults] = useState<Array<{ website: string; jobs: any[] }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -166,6 +170,115 @@ const JobWebsiteTracker = () => {
     });
   };
   
+  const searchJobsOnAllWebsites = async () => {
+    if (jobWebsites.length === 0) {
+      toast({
+        title: "No Websites",
+        description: "Please add some job websites first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSearching(true);
+    
+    try {
+      console.log('Starting job search across all websites...');
+      
+      const results = await JobSearchService.searchMultipleWebsites(
+        jobWebsites.map(site => ({
+          name: site.name,
+          url: site.url,
+          positions: site.positions
+        }))
+      );
+      
+      setJobResults(results);
+      
+      // Update last checked time and new jobs count
+      const updatedWebsites = jobWebsites.map(site => {
+        const siteResults = results.find(r => r.website === site.name);
+        return {
+          ...site,
+          lastChecked: new Date().toISOString(),
+          newJobs: siteResults?.jobs.length || 0
+        };
+      });
+      
+      setJobWebsites(updatedWebsites);
+      localStorage.setItem('jobWebsites', JSON.stringify(updatedWebsites));
+      
+      const totalJobs = results.reduce((sum, result) => sum + result.jobs.length, 0);
+      
+      toast({
+        title: "Job Search Complete",
+        description: `Found ${totalJobs} jobs across ${results.length} websites.`,
+      });
+      
+    } catch (error) {
+      console.error('Error searching jobs:', error);
+      toast({
+        title: "Search Failed",
+        description: "Failed to search for jobs. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+  
+  const searchJobsOnWebsite = async (website: JobWebsite) => {
+    setIsSearching(true);
+    
+    try {
+      console.log(`Searching jobs on ${website.name}...`);
+      
+      const results = await JobSearchService.searchMultipleWebsites([{
+        name: website.name,
+        url: website.url,
+        positions: website.positions
+      }]);
+      
+      // Update the results for this specific website
+      setJobResults(prevResults => {
+        const filtered = prevResults.filter(r => r.website !== website.name);
+        return [...filtered, ...results];
+      });
+      
+      // Update the website's last checked time and new jobs count
+      const updatedWebsites = jobWebsites.map(site => {
+        if (site.id === website.id) {
+          const siteResults = results.find(r => r.website === website.name);
+          return {
+            ...site,
+            lastChecked: new Date().toISOString(),
+            newJobs: siteResults?.jobs.length || 0
+          };
+        }
+        return site;
+      });
+      
+      setJobWebsites(updatedWebsites);
+      localStorage.setItem('jobWebsites', JSON.stringify(updatedWebsites));
+      
+      const jobCount = results[0]?.jobs.length || 0;
+      toast({
+        title: "Search Complete",
+        description: `Found ${jobCount} jobs on ${website.name}.`,
+      });
+      
+    } catch (error) {
+      console.error(`Error searching jobs on ${website.name}:`, error);
+      toast({
+        title: "Search Failed",
+        description: `Failed to search jobs on ${website.name}. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+  
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Never';
     
@@ -204,17 +317,27 @@ const JobWebsiteTracker = () => {
               Job Websites Tracker
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Track job websites and positions you're interested in
+              Track job websites and automatically find matching positions
             </p>
           </div>
-          <Button 
-            onClick={() => setShowAddForm(!showAddForm)} 
-            className="self-start md:self-center"
-            size="sm"
-          >
-            <Plus className="mr-1 h-4 w-4" />
-            Add Website
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={searchJobsOnAllWebsites}
+              disabled={isSearching || jobWebsites.length === 0}
+              size="sm"
+            >
+              <RefreshCw className={`mr-1 h-4 w-4 ${isSearching ? 'animate-spin' : ''}`} />
+              Search All Jobs
+            </Button>
+            <Button 
+              onClick={() => setShowAddForm(!showAddForm)} 
+              size="sm"
+              variant="outline"
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              Add Website
+            </Button>
+          </div>
         </CardHeader>
         
         <CardContent>
@@ -348,7 +471,12 @@ const JobWebsiteTracker = () => {
                         </label>
                       </div>
                       
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => searchJobsOnWebsite(website)}
+                        disabled={isSearching}
+                      >
                         <Search size={14} className="mr-1" />
                         Check Jobs
                       </Button>
@@ -406,6 +534,11 @@ const JobWebsiteTracker = () => {
           )}
         </CardContent>
       </Card>
+      
+      <JobResultsDisplay 
+        websiteResults={jobResults}
+        isLoading={isSearching}
+      />
     </div>
   );
 };
