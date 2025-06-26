@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { GoogleSheetsService } from '@/utils/googleSheetsService';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +7,12 @@ interface User {
   name: string;
   email: string;
   avatar?: string;
+  linkedinProfile?: string;
+  githubProfile?: string;
+  portfolioWebsite?: string;
+  twitterProfile?: string;
+  indeedProfile?: string;
+  glassdoorProfile?: string;
 }
 
 interface AuthContextType {
