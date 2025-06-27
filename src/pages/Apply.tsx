@@ -1,146 +1,178 @@
-
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { Progress } from "@/components/ui/progress";
-import JobSearchWithGemini from "@/components/JobSearchWithGemini";
-import Header from "@/components/Header";
-import { CircleCheck, FileWarning } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { Search, Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import JobSearchWithGemini from '@/components/JobSearchWithGemini';
+import JobWebsiteTracker from '@/components/JobWebsiteTracker';
+import Header from '@/components/Header';
+import EnhancedJobSearch from '@/components/EnhancedJobSearch';
 
 const Apply = () => {
   const navigate = useNavigate();
-  const [isCVUploaded, setIsCVUploaded] = useState(false);
-  const [cvCheckInProgress, setCvCheckInProgress] = useState(true);
-  const [cvStatus, setCvStatus] = useState<'checking' | 'valid' | 'invalid'>('checking');
-  const [cvDetails, setCvDetails] = useState<any>(null);
+  const [cvUploaded, setCvUploaded] = useState(false);
+  const [cvData, setCvData] = useState<any>(null);
   const { toast } = useToast();
-  
+
   useEffect(() => {
-    // Check if CV is uploaded
-    const checkCV = async () => {
-      setCvCheckInProgress(true);
-      setCvStatus('checking');
-      
-      // Simulate API delay for CV validation
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      const cv = localStorage.getItem('cv');
-      if (!cv) {
-        toast({
-          title: "No CV Found",
-          description: "Please upload your CV before applying to jobs",
-          variant: "destructive",
-        });
-        setCvStatus('invalid');
-        setIsCVUploaded(false);
-      } else {
-        try {
-          const cvData = JSON.parse(cv);
-          setCvDetails(cvData);
-          
-          if (!cvData.name || !cvData.uploadedAt) {
-            throw new Error("Invalid CV data");
-          }
-          
-          // CV data is valid
-          setCvStatus('valid');
-          setIsCVUploaded(true);
-          toast({
-            title: "CV Ready",
-            description: "Your CV is ready for automatic applications",
-          });
-        } catch (error) {
-          console.error("Error parsing CV data:", error);
-          setCvStatus('invalid');
-          setIsCVUploaded(false);
-          toast({
-            title: "CV Data Error",
-            description: "Your CV data appears to be corrupted. Please re-upload.",
-            variant: "destructive",
-          });
-        }
+    // Check if CV is already uploaded
+    const savedCV = localStorage.getItem('cv');
+    if (savedCV) {
+      try {
+        const parsedCV = JSON.parse(savedCV);
+        setCvData(parsedCV);
+        setCvUploaded(true);
+      } catch (error) {
+        console.error('Error parsing saved CV:', error);
       }
+    }
+  }, []);
+
+  const handleCVUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf' && !file.type.includes('text')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload a PDF or text file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
       
-      setCvCheckInProgress(false);
+      // Create a structured CV object
+      const cvObject = {
+        fileName: file.name,
+        content: content,
+        uploadDate: new Date().toISOString(),
+        fileType: file.type
+      };
+
+      localStorage.setItem('cv', JSON.stringify(cvObject));
+      setCvData(cvObject);
+      setCvUploaded(true);
+      
+      toast({
+        title: "CV Uploaded Successfully",
+        description: "Your CV has been saved and is ready for job matching",
+      });
     };
-    
-    checkCV();
-  }, [toast]);
-  
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+
+    reader.onerror = () => {
+      toast({
+        title: "Upload Failed",
+        description: "Failed to read the file. Please try again.",
+        variant: "destructive",
+      });
+    };
+
+    reader.readAsText(file);
+  };
+
+  const handleRemoveCV = () => {
+    localStorage.removeItem('cv');
+    setCvData(null);
+    setCvUploaded(false);
+    toast({
+      title: "CV Removed",
+      description: "Your CV has been removed from the system",
     });
   };
-  
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-slate-50 dark:from-background dark:to-background/70">
       <Header />
       
-      <main className="flex-1 flex flex-col pt-20">
-        <section className="py-12 flex-1">
+      <main className="flex-1 pt-20">
+        <section className="py-12">
           <div className="container px-4 md:px-6">
-            <div className="max-w-[80rem] mx-auto">
+            <div className="max-w-[90rem] mx-auto">
               <div className="space-y-3 mb-10 text-center animate-fade-in">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                  Find and Apply to Jobs
+                  Find Your Perfect Job
                 </h1>
                 <p className="text-muted-foreground md:text-xl max-w-[700px] mx-auto">
-                  Search for jobs that match your skills and let our AI automatically apply for you.
+                  Search and apply to jobs with AI-powered matching and automatic application tracking
                 </p>
               </div>
-              
-              {cvCheckInProgress ? (
-                <div className="max-w-md mx-auto py-12 animate-fade-in">
-                  <div className="space-y-4 text-center">
-                    <h3 className="text-lg font-medium">Checking your CV...</h3>
-                    <Progress value={50} className="w-full h-2" />
-                    <p className="text-sm text-muted-foreground">
-                      We're validating your CV for automatic applications
-                    </p>
-                  </div>
-                </div>
-              ) : cvStatus === 'invalid' ? (
-                <div className="text-center py-12 animate-fade-in">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 mb-6">
-                    <FileWarning className="h-8 w-8 text-red-600 dark:text-red-400" />
-                  </div>
-                  <p className="text-xl font-medium mb-3">
-                    CV Not Found or Invalid
-                  </p>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    You need to upload a valid CV before you can apply to jobs. Our system will use your CV data to automatically apply to compatible positions.
-                  </p>
-                  <Button onClick={() => navigate('/upload')} size="lg">
-                    Upload Your CV
-                  </Button>
-                </div>
-              ) : (
-                <div className="animate-slide-up space-y-8">
-                  <div className="max-w-4xl mx-auto bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-start gap-4">
-                    <CircleCheck className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-1" />
-                    <div>
-                      <h3 className="font-medium">CV Ready for Auto-Applications</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Your CV was uploaded on {cvDetails?.uploadedAt && formatDate(cvDetails.uploadedAt)}.
+
+              {/* CV Upload Section */}
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    CV Upload
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!cvUploaded ? (
+                    <div className="space-y-4">
+                      <p className="text-muted-foreground">
+                        Upload your CV to enable AI-powered job matching and personalized recommendations
                       </p>
-                      <div className="mt-3 flex gap-4">
-                        <Button variant="outline" size="sm" onClick={() => navigate('/upload')}>
-                          Update CV
-                        </Button>
+                      <div className="flex items-center gap-4">
+                        <Label htmlFor="cv-upload" className="cursor-pointer">
+                          <div className="flex items-center gap-2 px-4 py-2 border border-dashed border-border rounded-lg hover:bg-muted/50 transition-colors">
+                            <Upload className="h-4 w-4" />
+                            <span>Choose CV File</span>
+                          </div>
+                        </Label>
+                        <Input
+                          id="cv-upload"
+                          type="file"
+                          accept=".pdf,.txt,.doc,.docx"
+                          onChange={handleCVUpload}
+                          className="hidden"
+                        />
                       </div>
                     </div>
-                  </div>
-                  
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="font-medium">CV Uploaded Successfully</p>
+                          <p className="text-sm text-muted-foreground">
+                            {cvData?.fileName} • Uploaded {new Date(cvData?.uploadDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" onClick={handleRemoveCV}>
+                        Remove CV
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Tabs defaultValue="enhanced-search" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="enhanced-search">Enhanced Search</TabsTrigger>
+                  <TabsTrigger value="gemini-search">AI-Powered Search</TabsTrigger>
+                  <TabsTrigger value="website-tracker">Website Tracker</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="enhanced-search" className="space-y-6">
+                  <EnhancedJobSearch />
+                </TabsContent>
+                
+                <TabsContent value="gemini-search" className="space-y-6">
                   <JobSearchWithGemini />
-                </div>
-              )}
+                </TabsContent>
+                
+                <TabsContent value="website-tracker" className="space-y-6">
+                  <JobWebsiteTracker />
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </section>

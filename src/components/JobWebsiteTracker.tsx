@@ -1,222 +1,91 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Globe, 
-  Bell, 
-  BellOff,
-  Search,
-  Plus,
-  ExternalLink,
-  CheckCircle,
-  BriefcaseBusiness,
-  Zap,
-  Linkedin,
-  RefreshCw
-} from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
-import { JobSearchService } from '@/utils/jobSearchService';
+import { Search, Globe, MapPin, Plus, X, Loader2, TrendingUp } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 import JobResultsDisplay from './JobResultsDisplay';
+import { JobSearchService } from '@/utils/jobSearchService';
 
-export interface JobWebsite {
-  id: string;
+interface JobWebsite {
   name: string;
   url: string;
-  positions: string[];
-  notifications: boolean;
-  lastChecked?: string;
-  newJobs?: number;
-  appliedJobs?: number;
-  linkedInGroupUrl?: string;
 }
 
+const JOB_WEBSITES: JobWebsite[] = [
+  { name: "LinkedIn", url: "https://www.linkedin.com" },
+  { name: "Indeed", url: "https://www.indeed.com" },
+  { name: "Glassdoor", url: "https://www.glassdoor.com" },
+  { name: "Monster", url: "https://www.monster.com" },
+  { name: "SimplyHired", url: "https://www.simplyhired.com" },
+];
+
 const JobWebsiteTracker = () => {
-  const [jobWebsites, setJobWebsites] = useState<JobWebsite[]>([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newWebsite, setNewWebsite] = useState({
-    name: '',
-    url: '',
-    position: '',
-    linkedInGroupUrl: ''
-  });
-  const [jobResults, setJobResults] = useState<Array<{ website: string; jobs: any[] }>>([]);
+  const [selectedWebsite, setSelectedWebsite] = useState<JobWebsite | null>(null);
+  const [location, setLocation] = useState('');
+  const [newPosition, setNewPosition] = useState('');
+  const [positions, setPositions] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
-  
-  useEffect(() => {
-    // Load tracked websites from localStorage or use sample data
-    const savedWebsites = localStorage.getItem('jobWebsites');
-    
-    if (savedWebsites) {
-      setJobWebsites(JSON.parse(savedWebsites));
-    } else {
-      // Sample data for demonstration
-      const sampleWebsites: JobWebsite[] = [
-        {
-          id: "site1",
-          name: "LinkedIn",
-          url: "https://linkedin.com/jobs",
-          positions: ["Frontend Developer", "React Developer"],
-          notifications: true,
-          lastChecked: new Date().toISOString(),
-          newJobs: 3,
-          appliedJobs: 2,
-          linkedInGroupUrl: "https://www.linkedin.com/groups/12345/"
-        },
-        {
-          id: "site2",
-          name: "Indeed",
-          url: "https://indeed.com",
-          positions: ["JavaScript Engineer", "Web Developer"],
-          notifications: false,
-          lastChecked: new Date(Date.now() - 86400000).toISOString(),
-          newJobs: 5,
-          appliedJobs: 0
-        },
-        {
-          id: "site3",
-          name: "Glassdoor",
-          url: "https://glassdoor.com",
-          positions: ["Frontend Engineer", "UI Developer"],
-          notifications: true,
-          lastChecked: new Date(Date.now() - 86400000 * 2).toISOString(),
-          newJobs: 0,
-          appliedJobs: 1
-        }
-      ];
-      
-      setJobWebsites(sampleWebsites);
-      localStorage.setItem('jobWebsites', JSON.stringify(sampleWebsites));
+
+  const handleAddPosition = () => {
+    if (newPosition.trim() !== '') {
+      setPositions([...positions, newPosition.trim()]);
+      setNewPosition('');
     }
-  }, []);
-  
-  const toggleNotifications = (websiteId: string) => {
-    const updatedWebsites = jobWebsites.map(site => 
-      site.id === websiteId ? { ...site, notifications: !site.notifications } : site
-    );
-    
-    setJobWebsites(updatedWebsites);
-    localStorage.setItem('jobWebsites', JSON.stringify(updatedWebsites));
   };
-  
-  const handleAddWebsite = () => {
-    if (!newWebsite.name || !newWebsite.url || !newWebsite.position) return;
-    
-    const newSite: JobWebsite = {
-      id: Math.random().toString(36).substring(2, 15),
-      name: newWebsite.name,
-      url: newWebsite.url,
-      positions: [newWebsite.position],
-      notifications: true,
-      lastChecked: new Date().toISOString(),
-      newJobs: 0,
-      appliedJobs: 0,
-      linkedInGroupUrl: newWebsite.linkedInGroupUrl || undefined
-    };
-    
-    const updatedWebsites = [...jobWebsites, newSite];
-    setJobWebsites(updatedWebsites);
-    localStorage.setItem('jobWebsites', JSON.stringify(updatedWebsites));
-    
-    // Reset form
-    setNewWebsite({ name: '', url: '', position: '', linkedInGroupUrl: '' });
-    setShowAddForm(false);
-    
-    toast({
-      title: "Website Added",
-      description: `${newWebsite.name} has been added to your tracked job websites.`,
-    });
+
+  const handleRemovePosition = (index: number) => {
+    const newPositions = [...positions];
+    newPositions.splice(index, 1);
+    setPositions(newPositions);
   };
-  
-  const handleAddPosition = (websiteId: string, position: string) => {
-    if (!position) return;
-    
-    const updatedWebsites = jobWebsites.map(site => {
-      if (site.id === websiteId && !site.positions.includes(position)) {
-        return {
-          ...site,
-          positions: [...site.positions, position]
-        };
-      }
-      return site;
-    });
-    
-    setJobWebsites(updatedWebsites);
-    localStorage.setItem('jobWebsites', JSON.stringify(updatedWebsites));
-  };
-  
-  const updateLinkedInGroup = (websiteId: string, url: string) => {
-    if (!url) return;
-    
-    const updatedWebsites = jobWebsites.map(site => {
-      if (site.id === websiteId) {
-        return {
-          ...site,
-          linkedInGroupUrl: url
-        };
-      }
-      return site;
-    });
-    
-    setJobWebsites(updatedWebsites);
-    localStorage.setItem('jobWebsites', JSON.stringify(updatedWebsites));
-    
-    toast({
-      title: "LinkedIn Group Added",
-      description: "LinkedIn group URL has been updated for this job website.",
-    });
-  };
-  
-  const searchJobsOnAllWebsites = async () => {
-    if (jobWebsites.length === 0) {
+
+  const handleSearch = async () => {
+    if (!selectedWebsite || positions.length === 0) {
       toast({
-        title: "No Websites",
-        description: "Please add some job websites first.",
+        title: "Missing Information",
+        description: "Please select a website and add at least one position",
         variant: "destructive",
       });
       return;
     }
-    
+
     setIsSearching(true);
+    setSearchResults([]);
     
     try {
-      console.log('Starting job search across all websites...');
+      console.log('Starting job search with enhanced API service...');
       
-      const results = await JobSearchService.searchMultipleWebsites(
-        jobWebsites.map(site => ({
-          name: site.name,
-          url: site.url,
-          positions: site.positions
-        }))
-      );
+      // Use the enhanced JobApiService for better results
+      const results = await JobSearchService.searchMultipleWebsites([{
+        name: selectedWebsite.name,
+        url: selectedWebsite.url,
+        positions: positions
+      }], location || undefined);
       
-      setJobResults(results);
-      
-      // Update last checked time and new jobs count
-      const updatedWebsites = jobWebsites.map(site => {
-        const siteResults = results.find(r => r.website === site.name);
-        return {
-          ...site,
-          lastChecked: new Date().toISOString(),
-          newJobs: siteResults?.jobs.length || 0
-        };
-      });
-      
-      setJobWebsites(updatedWebsites);
-      localStorage.setItem('jobWebsites', JSON.stringify(updatedWebsites));
+      setSearchResults(results);
       
       const totalJobs = results.reduce((sum, result) => sum + result.jobs.length, 0);
       
-      toast({
-        title: "Job Search Complete",
-        description: `Found ${totalJobs} jobs across ${results.length} websites.`,
-      });
-      
+      if (totalJobs > 0) {
+        toast({
+          title: "Search Complete",
+          description: `Found ${totalJobs} jobs across ${results.length} website(s)`,
+        });
+      } else {
+        toast({
+          title: "No Jobs Found",
+          description: "Try different keywords or check back later",
+          variant: "default",
+        });
+      }
     } catch (error) {
-      console.error('Error searching jobs:', error);
+      console.error("Job search error:", error);
       toast({
         title: "Search Failed",
         description: "Failed to search for jobs. Please try again.",
@@ -226,320 +95,142 @@ const JobWebsiteTracker = () => {
       setIsSearching(false);
     }
   };
-  
-  const searchJobsOnWebsite = async (website: JobWebsite) => {
-    setIsSearching(true);
-    
-    try {
-      console.log(`Searching jobs on ${website.name}...`);
-      
-      const results = await JobSearchService.searchMultipleWebsites([{
-        name: website.name,
-        url: website.url,
-        positions: website.positions
-      }]);
-      
-      // Update the results for this specific website
-      setJobResults(prevResults => {
-        const filtered = prevResults.filter(r => r.website !== website.name);
-        return [...filtered, ...results];
-      });
-      
-      // Update the website's last checked time and new jobs count
-      const updatedWebsites = jobWebsites.map(site => {
-        if (site.id === website.id) {
-          const siteResults = results.find(r => r.website === website.name);
-          return {
-            ...site,
-            lastChecked: new Date().toISOString(),
-            newJobs: siteResults?.jobs.length || 0
-          };
-        }
-        return site;
-      });
-      
-      setJobWebsites(updatedWebsites);
-      localStorage.setItem('jobWebsites', JSON.stringify(updatedWebsites));
-      
-      const jobCount = results[0]?.jobs.length || 0;
-      toast({
-        title: "Search Complete",
-        description: `Found ${jobCount} jobs on ${website.name}.`,
-      });
-      
-    } catch (error) {
-      console.error(`Error searching jobs on ${website.name}:`, error);
-      toast({
-        title: "Search Failed",
-        description: `Failed to search jobs on ${website.name}. Please try again.`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-  
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Never';
-    
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
-    } catch (e) {
-      return 'Invalid date';
-    }
-  };
-  
-  const openLinkedInGroup = (url?: string) => {
-    if (!url) return;
-    
-    // Make sure the URL has the https prefix
-    let fullUrl = url;
-    if (!url.startsWith('http')) {
-      fullUrl = 'https://' + url;
-    }
-    
-    window.open(fullUrl, '_blank', 'noopener,noreferrer');
-  };
-  
+
   return (
-    <div className="w-full max-w-4xl mx-auto mt-8">
-      <Card className="glass-panel">
-        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Globe className="h-5 w-5" />
+          Enhanced Job Website Tracker
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Track specific positions across job websites with intelligent keyword matching
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Enhanced Search Form */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <CardTitle className="text-xl font-bold flex items-center gap-2">
-              <Globe className="h-5 w-5 text-primary" />
-              Job Websites Tracker
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Track job websites and automatically find matching positions
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              onClick={searchJobsOnAllWebsites}
-              disabled={isSearching || jobWebsites.length === 0}
-              size="sm"
+            <Label htmlFor="website-select">Job Website</Label>
+            <Select 
+              value={selectedWebsite?.name || ""} 
+              onValueChange={(value) => {
+                const website = JOB_WEBSITES.find(w => w.name === value);
+                setSelectedWebsite(website || null);
+              }}
             >
-              <RefreshCw className={`mr-1 h-4 w-4 ${isSearching ? 'animate-spin' : ''}`} />
-              Search All Jobs
-            </Button>
-            <Button 
-              onClick={() => setShowAddForm(!showAddForm)} 
-              size="sm"
-              variant="outline"
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              Add Website
-            </Button>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a job website" />
+              </SelectTrigger>
+              <SelectContent>
+                {JOB_WEBSITES.map((website) => (
+                  <SelectItem key={website.name} value={website.name}>
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-4 w-4" />
+                      {website.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </CardHeader>
-        
-        <CardContent>
-          {showAddForm && (
-            <div className="bg-muted/30 rounded-lg p-4 mb-6 animate-fade-in border border-border">
-              <h3 className="font-medium mb-3">Add New Job Website</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">Website Name</label>
-                  <Input
-                    placeholder="LinkedIn, Indeed, etc."
-                    value={newWebsite.name}
-                    onChange={(e) => setNewWebsite({...newWebsite, name: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">Website URL</label>
-                  <Input
-                    placeholder="https://example.com"
-                    value={newWebsite.url}
-                    onChange={(e) => setNewWebsite({...newWebsite, url: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">Position Looking For</label>
-                  <Input
-                    placeholder="Frontend Developer, etc."
-                    value={newWebsite.position}
-                    onChange={(e) => setNewWebsite({...newWebsite, position: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">LinkedIn Group URL (Optional)</label>
-                  <Input
-                    placeholder="https://linkedin.com/groups/..."
-                    value={newWebsite.linkedInGroupUrl}
-                    onChange={(e) => setNewWebsite({...newWebsite, linkedInGroupUrl: e.target.value})}
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => setShowAddForm(false)}>Cancel</Button>
-                <Button size="sm" onClick={handleAddWebsite}>Add Website</Button>
-              </div>
+
+          <div>
+            <Label htmlFor="location-input">Location (Optional)</Label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+              <Input
+                id="location-input"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g. San Francisco, Remote"
+                className="pl-9"
+              />
             </div>
-          )}
+          </div>
+        </div>
+
+        {/* Position Management */}
+        <div>
+          <Label htmlFor="position-input">Job Positions to Track</Label>
+          <div className="flex gap-2 mt-1">
+            <Input
+              id="position-input"
+              value={newPosition}
+              onChange={(e) => setNewPosition(e.target.value)}
+              placeholder="e.g. Frontend Developer, Product Manager"
+              onKeyPress={(e) => e.key === 'Enter' && handleAddPosition()}
+            />
+            <Button onClick={handleAddPosition} disabled={!newPosition.trim()}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
           
-          {jobWebsites.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-muted-foreground">No job websites added yet.</p>
-              <Button 
-                onClick={() => setShowAddForm(true)} 
-                variant="outline" 
-                className="mt-4"
-              >
-                Add Your First Website
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {jobWebsites.map((website) => (
-                <div 
-                  key={website.id} 
-                  className="border border-border rounded-lg p-4 hover:bg-muted/20 transition-colors"
-                >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{website.name}</h3>
-                        <a 
-                          href={website.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center"
-                        >
-                          <ExternalLink size={14} className="ml-1" />
-                        </a>
-                        
-                        {website.linkedInGroupUrl && (
-                          <button
-                            onClick={() => openLinkedInGroup(website.linkedInGroupUrl)}
-                            className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 ml-2 text-sm"
-                            aria-label="Open LinkedIn Group"
-                          >
-                            <Linkedin size={14} />
-                            <span>LinkedIn Group</span>
-                          </button>
-                        )}
-                      </div>
-                      <div className="mt-1 text-sm text-muted-foreground">
-                        Last checked: {formatDate(website.lastChecked)}
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
-                      {website.newJobs && website.newJobs > 0 ? (
-                        <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800">
-                          <Zap size={14} className="mr-1" />
-                          {website.newJobs} new jobs
-                        </Badge>
-                      ) : null}
-                      
-                      {website.appliedJobs && website.appliedJobs > 0 ? (
-                        <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800">
-                          <CheckCircle size={14} className="mr-1" />
-                          {website.appliedJobs} applied
-                        </Badge>
-                      ) : null}
-                      
-                      <div className="flex items-center space-x-2 ml-auto">
-                        <Switch
-                          id={`notifications-${website.id}`}
-                          checked={website.notifications}
-                          onCheckedChange={() => toggleNotifications(website.id)}
-                        />
-                        <label
-                          htmlFor={`notifications-${website.id}`}
-                          className="text-sm cursor-pointer flex items-center gap-1"
-                        >
-                          {website.notifications ? (
-                            <>
-                              <Bell size={14} className="text-primary" />
-                              <span className="sr-only md:not-sr-only">Notifications On</span>
-                            </>
-                          ) : (
-                            <>
-                              <BellOff size={14} className="text-muted-foreground" />
-                              <span className="sr-only md:not-sr-only">Notifications Off</span>
-                            </>
-                          )}
-                        </label>
-                      </div>
-                      
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => searchJobsOnWebsite(website)}
-                        disabled={isSearching}
-                      >
-                        <Search size={14} className="mr-1" />
-                        Check Jobs
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-3 pt-3 border-t border-dashed border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <BriefcaseBusiness size={15} className="text-muted-foreground" />
-                      <h4 className="text-sm font-medium">Positions you're looking for:</h4>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {website.positions.map((position, index) => (
-                        <Badge key={index} variant="secondary">
-                          {position}
-                        </Badge>
-                      ))}
-                      
-                      <div className="relative inline-block">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 px-2 rounded-full"
-                          onClick={() => {
-                            const position = prompt("Enter position name");
-                            if (position) handleAddPosition(website.id, position);
-                          }}
-                        >
-                          <Plus size={14} />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {!website.linkedInGroupUrl && (
-                    <div className="mt-3 pt-2 border-t border-dashed border-border">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-blue-600 dark:text-blue-400 p-0 h-auto"
-                        onClick={() => {
-                          const url = prompt("Enter LinkedIn group URL for this job website");
-                          if (url) updateLinkedInGroup(website.id, url);
-                        }}
-                      >
-                        <Linkedin size={14} className="mr-1" />
-                        Add LinkedIn group
-                      </Button>
-                    </div>
-                  )}
-                </div>
+          {positions.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {positions.map((position, index) => (
+                <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                  {position}
+                  <button
+                    onClick={() => handleRemovePosition(index)}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
-      
-      <JobResultsDisplay 
-        websiteResults={jobResults}
-        isLoading={isSearching}
-      />
-    </div>
+        </div>
+
+        {/* Enhanced Search Button */}
+        <Button
+          onClick={handleSearch}
+          disabled={isSearching || !selectedWebsite || positions.length === 0}
+          className="w-full"
+        >
+          {isSearching ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Searching with AI-powered matching...
+            </>
+          ) : (
+            <>
+              <Search className="mr-2 h-4 w-4" />
+              Search Jobs with Enhanced Targeting
+            </>
+          )}
+        </Button>
+
+        {/* Advanced Search Info */}
+        {selectedWebsite && positions.length > 0 && (
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-start gap-2">
+              <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-blue-800 dark:text-blue-200 mb-1">
+                  Enhanced Search Ready
+                </p>
+                <p className="text-blue-700 dark:text-blue-300">
+                  Will search for <strong>{positions.join(', ')}</strong> on{' '}
+                  <strong>{selectedWebsite.name}</strong>
+                  {location && (
+                    <> in <strong>{location}</strong></>
+                  )}
+                  <br />
+                  Using intelligent keyword matching and company-specific filtering.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <JobResultsDisplay 
+          websiteResults={searchResults} 
+          isLoading={isSearching} 
+        />
+      </CardContent>
+    </Card>
   );
 };
 
