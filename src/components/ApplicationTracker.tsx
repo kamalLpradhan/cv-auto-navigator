@@ -46,7 +46,7 @@ const ApplicationTracker = () => {
       id: app.id || Math.random().toString(36).substring(2, 15),
     }));
     
-    console.log('Loading applications with profile tracking:', appsWithIds.length);
+    console.log('Loading applications with real-time tracking:', appsWithIds.length);
     setApplications(appsWithIds);
     setFilteredApplications(appsWithIds);
   };
@@ -80,21 +80,21 @@ const ApplicationTracker = () => {
     window.addEventListener('applicationAdded', handleApplicationAdded as EventListener);
     window.addEventListener('applicationsRefresh', handleApplicationsRefresh);
     
-    // Set up a periodic refresh to ensure data consistency
-    const refreshInterval = setInterval(() => {
+    // Set up real-time refresh for application status updates
+    const realtimeInterval = setInterval(() => {
       const currentCount = applications.length;
       const storageCount = JSON.parse(localStorage.getItem('applications') || '[]').length;
       if (currentCount !== storageCount) {
-        console.log('Application count mismatch, refreshing');
+        console.log('Application count mismatch detected, refreshing in real-time');
         loadApplications();
       }
-    }, 2000);
+    }, 1000); // Check every second for real-time updates
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('applicationAdded', handleApplicationAdded as EventListener);
       window.removeEventListener('applicationsRefresh', handleApplicationsRefresh);
-      clearInterval(refreshInterval);
+      clearInterval(realtimeInterval);
     };
   }, [applications.length]);
   

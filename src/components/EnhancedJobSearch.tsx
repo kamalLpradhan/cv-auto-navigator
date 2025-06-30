@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,11 +20,13 @@ import {
   Star,
   TrendingUp,
   Filter,
-  Loader2
+  Loader2,
+  Zap
 } from 'lucide-react';
-import { JobApiService } from '@/utils/jobApiService';
 import { applyToJob } from '@/utils/applicationService';
 import { debounce } from 'lodash';
+import { useRealtimeJobSearch } from '@/hooks/useRealtimeJobSearch';
+import RealtimeStatus from './RealtimeStatus';
 
 interface JobListing {
   id: string;
@@ -57,63 +58,25 @@ const EnhancedJobSearch = () => {
   const [jobType, setJobType] = useState('');
   const [salaryMin, setSalaryMin] = useState('');
   const [remoteOnly, setRemoteOnly] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const [jobs, setJobs] = useState<JobListing[]>([]);
   const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
   const [applyingJobs, setApplyingJobs] = useState<Set<string>>(new Set());
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const { toast } = useToast();
 
-  const performSearch = useCallback(async () => {
-    if (!searchQuery.trim()) return;
-
-    setIsSearching(true);
-    try {
-      const results = await JobApiService.searchJobs({
-        query: searchQuery,
-        location: location || undefined,
-        jobType: jobType || undefined,
-        salaryMin: salaryMin ? parseInt(salaryMin) : undefined,
-        remote: remoteOnly
-      });
-
-      setJobs(results);
-      
-      if (results.length === 0) {
-        toast({
-          title: "No jobs found",
-          description: "Try adjusting your search criteria or keywords",
-        });
-      } else {
-        toast({
-          title: `Found ${results.length} jobs`,
-          description: "Showing relevant positions based on your search",
-        });
-      }
-    } catch (error) {
-      console.error('Job search error:', error);
-      toast({
-        title: "Search Error",
-        description: "Failed to search for jobs. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  }, [searchQuery, location, jobType, salaryMin, remoteOnly, toast]);
-
-  const debouncedSearch = useCallback(
-    debounce(() => {
-      if (searchQuery.trim()) {
-        performSearch();
-      }
-    }, 800),
-    [performSearch]
-  );
-
-  useEffect(() => {
-    debouncedSearch();
-    return () => debouncedSearch.cancel();
-  }, [searchQuery, location, jobType, salaryMin, remoteOnly, debouncedSearch]);
+  // Use the real-time job search hook
+  const { 
+    jobs, 
+    isSearching, 
+    lastSearchTime, 
+    newJobsCount, 
+    searchJobs, 
+    markAsViewed 
+  } = useRealtimeJobSearch({
+    query: searchQuery,
+    location: location || undefined,
+    autoRefresh: autoRefreshEnabled,
+    refreshInterval: 300000 // 5 minutes
+  });
 
   const toggleJobExpansion = (jobId: string) => {
     const newExpanded = new Set(expandedJobs);
@@ -179,12 +142,52 @@ const EnhancedJobSearch = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6">
+      {/* Real-time Status Bar */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-green-500" />
+              <span className="text-sm font-medium">Real-time Job Search</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={autoRefreshEnabled}
+                  onCheckedChange={setAutoRefreshEnabled}
+                  id="auto-refresh"
+                />
+                <Label htmlFor="auto-refresh" className="text-sm">Auto-refresh</Label>
+              </div>
+              <RealtimeStatus />
+            </div>
+          </div>
+          {newJobsCount > 0 && (
+            <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-blue-700 dark:text-blue-300">
+                  {newJobsCount} new job(s) found! 
+                  {lastSearchTime && (
+                    <span className="ml-2 text-xs">
+                      Last updated: {lastSearchTime.toLocaleTimeString()}
+                    </span>
+                  )}
+                </span>
+                <Button size="sm" onClick={markAsViewed}>
+                  Mark as viewed
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Search Filters */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
-            Enhanced Job Search
+            Real-time Job Search
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -265,7 +268,7 @@ const EnhancedJobSearch = () => {
         <div className="flex justify-center py-8">
           <div className="flex items-center gap-2">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span>Searching for jobs...</span>
+            <span>Searching for jobs in real-time...</span>
           </div>
         </div>
       )}
@@ -275,11 +278,23 @@ const EnhancedJobSearch = () => {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">
               Found {jobs.length} job{jobs.length !== 1 ? 's' : ''}
+              {newJobsCount > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {newJobsCount} new
+                </Badge>
+              )}
             </h3>
-            <Badge variant="outline" className="flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              Sorted by relevance
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                Live results
+              </Badge>
+              {lastSearchTime && (
+                <span className="text-xs text-muted-foreground">
+                  Updated: {lastSearchTime.toLocaleTimeString()}
+                </span>
+              )}
+            </div>
           </div>
           
           {jobs.map((job) => (
