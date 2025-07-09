@@ -1,96 +1,83 @@
 
-// Application service utility for handling job applications
+import { Application } from '@/components/ApplicationTracker';
 
-interface Job {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
-  type: string;
-  description: string;
-  requirements: string[];
-  skills: string[];
-  postedDate: string;
-  canAutoApply: boolean;
-}
-
-interface ApplicationResult {
-  success: boolean;
-  message: string;
-}
-
-// Function to simulate applying to a job
-export const applyToJob = async (job: Job): Promise<ApplicationResult> => {
-  // In a real application, this would make API calls to external job sites
-  return new Promise((resolve) => {
-    // Simulate API delay
-    setTimeout(() => {
-      if (job.canAutoApply) {
-        // Simulate successful application
-        resolve({
-          success: true,
-          message: `Successfully applied to ${job.title} at ${job.company}. Your application has been submitted.`
-        });
-      } else {
-        // Simulate failed application that requires manual intervention
-        const reasons = [
-          "This job requires completing a custom application form on the company website.",
-          "The company requires a cover letter to be uploaded separately.",
-          "This position requires answering pre-screening questions before applying.",
-          "The application system requires creating an account on the company website.",
-          "The job posting may have expired or been removed from the company website."
-        ];
-        
-        // Randomly select a reason
-        const reason = reasons[Math.floor(Math.random() * reasons.length)];
-        
-        resolve({
-          success: false,
-          message: `Unable to auto-apply for this position. Reason: ${reason}`
-        });
-      }
-    }, 1500);
+export const applyToJob = async (job: any): Promise<void> => {
+  // Get existing applications
+  const existingApplications = JSON.parse(localStorage.getItem('applications') || '[]');
+  
+  // Get user profile information
+  const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+  
+  // Create new application with better data structure and user profile info
+  const newApplication: Application = {
+    id: Math.random().toString(36).substring(2, 15),
+    jobId: job.id,
+    jobTitle: job.title,
+    company: job.company,
+    position: job.title,
+    appliedDate: new Date().toISOString(),
+    status: 'Applied',
+    autoApplied: true,
+    source: job.source || 'Job Search',
+    sourceId: job.sourceId || job.id,
+    contactEmail: job.contactEmail,
+    contactName: job.contactName,
+    contactLinkedIn: job.contactLinkedIn,
+    // Add user profile information to the application
+    userLinkedIn: userProfile.linkedinProfile,
+    userGithub: userProfile.githubProfile,
+    userPortfolio: userProfile.portfolioWebsite,
+    userTwitter: userProfile.twitterProfile,
+    userIndeed: userProfile.indeedProfile,
+    userGlassdoor: userProfile.glassdoorProfile,
+    appliedVia: determineApplicationSource(job, userProfile)
+  };
+  
+  // Add to existing applications
+  const updatedApplications = [...existingApplications, newApplication];
+  
+  // Save to localStorage
+  localStorage.setItem('applications', JSON.stringify(updatedApplications));
+  
+  // Trigger multiple events to ensure all components update
+  const applicationAddedEvent = new CustomEvent('applicationAdded', {
+    detail: newApplication
   });
+  
+  const storageUpdateEvent = new StorageEvent('storage', {
+    key: 'applications',
+    newValue: JSON.stringify(updatedApplications),
+    oldValue: JSON.stringify(existingApplications),
+    url: window.location.href
+  });
+  
+  // Dispatch both events
+  window.dispatchEvent(applicationAddedEvent);
+  window.dispatchEvent(storageUpdateEvent);
+  
+  // Also trigger a custom refresh event
+  const refreshEvent = new CustomEvent('applicationsRefresh');
+  window.dispatchEvent(refreshEvent);
+  
+  console.log('Application added successfully with profile info:', newApplication);
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
 };
 
-// Function to check application status (for future implementation)
-export const checkApplicationStatus = async (applicationId: string): Promise<string> => {
-  // This would check the status of a submitted application
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const statuses = ['In Review', 'Rejected', 'Interview', 'Offer'];
-      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-      resolve(randomStatus);
-    }, 1000);
-  });
-};
-
-// Function to parse and extract data from CV (for future implementation)
-export const parseCV = async (file: File): Promise<Record<string, any>> => {
-  // This would use an API to parse the CV and extract relevant data
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '(123) 456-7890',
-        skills: ['JavaScript', 'React', 'TypeScript', 'Node.js'],
-        experience: [
-          {
-            title: 'Frontend Developer',
-            company: 'Tech Company',
-            startDate: '2020-01',
-            endDate: 'Present',
-          }
-        ],
-        education: [
-          {
-            degree: 'Bachelor of Science, Computer Science',
-            institution: 'University Name',
-            graduationYear: '2019'
-          }
-        ]
-      });
-    }, 2000);
-  });
+// Helper function to determine which profile was used for application
+const determineApplicationSource = (job: any, userProfile: any): string => {
+  if (job.source === 'LinkedIn Jobs' && userProfile.linkedinProfile) {
+    return `Applied via LinkedIn (${userProfile.linkedinProfile})`;
+  }
+  if (job.source === 'Indeed' && userProfile.indeedProfile) {
+    return `Applied via Indeed (${userProfile.indeedProfile})`;
+  }
+  if (job.source === 'Glassdoor' && userProfile.glassdoorProfile) {
+    return `Applied via Glassdoor (${userProfile.glassdoorProfile})`;
+  }
+  if (userProfile.portfolioWebsite) {
+    return `Applied with portfolio: ${userProfile.portfolioWebsite}`;
+  }
+  return 'Applied directly';
 };

@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, Upload, Search, CheckCircle, Target } from "lucide-react";
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
+import AuthButtons from "@/components/AuthButtons";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -20,35 +22,59 @@ const Index = () => {
       <Header />
       
       <main className="flex-1 flex flex-col">
-        <section className="py-24 lg:py-32 flex items-center">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl animate-fade-in">
-                  AI-Powered CV Navigator
-                </h1>
-                <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl animate-slide-up">
-                  Automatically apply your CV to thousands of job positions with a single click
-                </p>
+        <section className="py-24 lg:py-32 flex items-center relative overflow-hidden">
+          {/* Background Image */}
+          <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
+            <video 
+              autoPlay 
+              loop 
+              muted 
+              playsInline
+              className="w-full h-full object-cover opacity-20 dark:opacity-10"
+            >
+              <source src={`https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1600&h=900&fit=crop`} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background"></div>
+          </div>
+
+          <div className="container px-4 md:px-6 relative z-10">
+            <div className="flex flex-col md:flex-row md:items-center md:gap-12">
+              <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-4 mb-8 md:mb-0">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl animate-fade-in">
+                    AI-Powered CV Navigator
+                  </h1>
+                  <p className="mx-auto md:mx-0 max-w-[700px] text-muted-foreground md:text-xl animate-slide-up">
+                    Automatically apply your CV to thousands of job positions with a single click
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 mt-6 animate-slide-up">
+                  <Button 
+                    onClick={() => navigate('/upload')} 
+                    size="lg" 
+                    className="gap-1"
+                  >
+                    Upload Your CV
+                    <Upload size={18} />
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/apply')} 
+                    variant="outline" 
+                    size="lg"
+                    className="gap-1"
+                  >
+                    Browse Jobs
+                    <ArrowRight size={18} />
+                  </Button>
+                </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 mt-6 animate-slide-up">
-                <Button 
-                  onClick={() => navigate('/upload')} 
-                  size="lg" 
-                  className="gap-1"
-                >
-                  Upload Your CV
-                  <Upload size={18} />
-                </Button>
-                <Button 
-                  onClick={() => navigate('/apply')} 
-                  variant="outline" 
-                  size="lg"
-                  className="gap-1"
-                >
-                  Browse Jobs
-                  <ArrowRight size={18} />
-                </Button>
+              
+              <div className="flex-1 max-w-md mx-auto md:mx-0 w-full animate-slide-up relative z-10">
+                <div className="bg-background/90 backdrop-blur-sm rounded-xl border shadow-sm p-6">
+                  <h2 className="text-2xl font-semibold mb-6 text-center">Get Started</h2>
+                  <AuthButtons />
+                </div>
               </div>
             </div>
           </div>
@@ -157,13 +183,7 @@ const Index = () => {
         </section>
       </main>
       
-      <footer className="border-t py-6 md:py-8">
-        <div className="container flex flex-col items-center justify-center gap-4 px-4 md:px-6 md:flex-row">
-          <p className="text-center text-sm text-muted-foreground md:text-left">
-            &copy; {new Date().getFullYear()} CV Navigator. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

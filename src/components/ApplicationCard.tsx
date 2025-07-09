@@ -10,7 +10,10 @@ import {
   ExternalLink,
   BriefcaseBusiness,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Mail,
+  Linkedin,
+  User
 } from 'lucide-react';
 import { Application } from './ApplicationTracker';
 import { useState } from 'react';
@@ -80,6 +83,17 @@ const ApplicationCard = ({ application }: ApplicationCardProps) => {
     }
   };
   
+  const handleLinkedInClick = (linkedInUrl: string) => {
+    // Make sure the URL has the https prefix
+    let url = linkedInUrl;
+    if (!url.startsWith('http')) {
+      url = 'https://' + url;
+    }
+    
+    // Open LinkedIn in a new tab
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+  
   return (
     <Card className="overflow-hidden card-hover">
       <CardContent className="p-0">
@@ -95,6 +109,11 @@ const ApplicationCard = ({ application }: ApplicationCardProps) => {
               </div>
               
               <h3 className="text-lg font-medium">{application.jobTitle}</h3>
+              {application.position && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Position: {application.position}
+                </p>
+              )}
               
               <div className="flex flex-wrap gap-2 mt-3">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass()}`}>
@@ -112,6 +131,40 @@ const ApplicationCard = ({ application }: ApplicationCardProps) => {
                   </span>
                 )}
               </div>
+
+              {/* Contact information section with enhanced LinkedIn integration */}
+              {(application.contactEmail || application.contactLinkedIn || application.contactName) && (
+                <div className="mt-3 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Hiring Contact:</p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {application.contactName && (
+                      <div className="flex items-center gap-1 text-sm">
+                        <User size={14} className="text-muted-foreground" />
+                        <span>{application.contactName}</span>
+                      </div>
+                    )}
+                    {application.contactEmail && (
+                      <a 
+                        href={`mailto:${application.contactEmail}`}
+                        className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        <Mail size={14} />
+                        <span>{application.contactEmail}</span>
+                      </a>
+                    )}
+                    {application.contactLinkedIn && (
+                      <button 
+                        onClick={() => handleLinkedInClick(application.contactLinkedIn!)}
+                        className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                        aria-label={`View ${application.contactName || 'contact'} on LinkedIn`}
+                      >
+                        <Linkedin size={14} />
+                        <span>Connect on LinkedIn</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="flex space-x-2">
@@ -151,7 +204,7 @@ const ApplicationCard = ({ application }: ApplicationCardProps) => {
                     <li>Check the company website directly</li>
                     <li>Try using a different browser</li>
                     <li>Make sure your CV is in a supported format</li>
-                    <li>Consider reaching out to the company via email</li>
+                    <li>Consider reaching out to the company via email or LinkedIn</li>
                   </ul>
                 </div>
               )}

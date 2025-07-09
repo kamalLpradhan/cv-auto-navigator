@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, FileCheck, Clock, X, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Search, FileCheck, Clock, X, CheckCircle, AlertTriangle, Globe, Briefcase, Linkedin } from 'lucide-react';
 import ApplicationCard from './ApplicationCard';
 
 export interface Application {
@@ -16,6 +15,20 @@ export interface Application {
   status: 'Applied' | 'In Review' | 'Rejected' | 'Interview' | 'Offer' | 'Failed';
   autoApplied: boolean;
   message?: string;
+  position?: string;
+  contactEmail?: string;
+  contactLinkedIn?: string;
+  contactName?: string;
+  source?: string;
+  sourceId?: string;
+  // New profile tracking fields
+  userLinkedIn?: string;
+  userGithub?: string;
+  userPortfolio?: string;
+  userTwitter?: string;
+  userIndeed?: string;
+  userGlassdoor?: string;
+  appliedVia?: string;
 }
 
 const ApplicationTracker = () => {
@@ -24,8 +37,7 @@ const ApplicationTracker = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   
-  useEffect(() => {
-    // Load applications from localStorage for demo purposes
+  const loadApplications = () => {
     const savedApplications = JSON.parse(localStorage.getItem('applications') || '[]');
     
     // Add unique IDs if they don't exist
@@ -34,9 +46,57 @@ const ApplicationTracker = () => {
       id: app.id || Math.random().toString(36).substring(2, 15),
     }));
     
+    console.log('Loading applications with real-time tracking:', appsWithIds.length);
     setApplications(appsWithIds);
     setFilteredApplications(appsWithIds);
-  }, []);
+  };
+  
+  useEffect(() => {
+    // Load applications initially
+    loadApplications();
+    
+    // Listen for storage changes to detect new applications
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'applications') {
+        console.log('Storage changed, reloading applications');
+        loadApplications();
+      }
+    };
+    
+    // Listen for custom events when applications are added
+    const handleApplicationAdded = (e: CustomEvent) => {
+      console.log('Application added event received:', e.detail);
+      loadApplications();
+    };
+    
+    // Listen for refresh events
+    const handleApplicationsRefresh = () => {
+      console.log('Applications refresh event received');
+      loadApplications();
+    };
+    
+    // Add all event listeners
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('applicationAdded', handleApplicationAdded as EventListener);
+    window.addEventListener('applicationsRefresh', handleApplicationsRefresh);
+    
+    // Set up real-time refresh for application status updates
+    const realtimeInterval = setInterval(() => {
+      const currentCount = applications.length;
+      const storageCount = JSON.parse(localStorage.getItem('applications') || '[]').length;
+      if (currentCount !== storageCount) {
+        console.log('Application count mismatch detected, refreshing in real-time');
+        loadApplications();
+      }
+    }, 1000); // Check every second for real-time updates
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('applicationAdded', handleApplicationAdded as EventListener);
+      window.removeEventListener('applicationsRefresh', handleApplicationsRefresh);
+      clearInterval(realtimeInterval);
+    };
+  }, [applications.length]);
   
   useEffect(() => {
     // Filter applications based on search term and active tab
@@ -46,7 +106,9 @@ const ApplicationTracker = () => {
     if (searchTerm) {
       filtered = filtered.filter(app => 
         app.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.company.toLowerCase().includes(searchTerm.toLowerCase())
+        app.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (app.source && app.source.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (app.appliedVia && app.appliedVia.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
@@ -57,6 +119,24 @@ const ApplicationTracker = () => {
       filtered = filtered.filter(app => !app.autoApplied);
     } else if (activeTab === 'failed') {
       filtered = filtered.filter(app => app.status === 'Failed');
+    } else if (activeTab === 'google') {
+      filtered = filtered.filter(app => app.source === 'Google Jobs');
+    } else if (activeTab === 'linkedin') {
+      filtered = filtered.filter(app => app.source === 'LinkedIn Jobs');
+    } else if (activeTab === 'product') {
+      filtered = filtered.filter(app => 
+        app.jobTitle.toLowerCase().includes('product manager') || 
+        app.position?.toLowerCase().includes('product manager')
+      );
+    } else if (activeTab === 'growth') {
+      filtered = filtered.filter(app => 
+        app.jobTitle.toLowerCase().includes('growth') || 
+        app.position?.toLowerCase().includes('growth')
+      );
+    } else if (activeTab === 'with-profiles') {
+      filtered = filtered.filter(app => 
+        app.userLinkedIn || app.userGithub || app.userPortfolio || app.userTwitter || app.userIndeed || app.userGlassdoor
+      );
     }
     
     setFilteredApplications(filtered);
@@ -66,8 +146,21 @@ const ApplicationTracker = () => {
     const autoApplied = applications.filter(app => app.autoApplied).length;
     const manual = applications.filter(app => !app.autoApplied).length;
     const failed = applications.filter(app => app.status === 'Failed').length;
+    const google = applications.filter(app => app.source === 'Google Jobs').length;
+    const linkedin = applications.filter(app => app.source === 'LinkedIn Jobs').length;
+    const product = applications.filter(app => 
+      app.jobTitle.toLowerCase().includes('product manager') || 
+      app.position?.toLowerCase().includes('product manager')
+    ).length;
+    const growth = applications.filter(app => 
+      app.jobTitle.toLowerCase().includes('growth') || 
+      app.position?.toLowerCase().includes('growth')
+    ).length;
+    const withProfiles = applications.filter(app => 
+      app.userLinkedIn || app.userGithub || app.userPortfolio || app.userTwitter || app.userIndeed || app.userGlassdoor
+    ).length;
     
-    return { autoApplied, manual, failed, total: applications.length };
+    return { autoApplied, manual, failed, google, linkedin, product, growth, withProfiles, total: applications.length };
   };
   
   const counts = getStatusCounts();
@@ -93,11 +186,11 @@ const ApplicationTracker = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Auto-Applied</p>
-                <h3 className="text-3xl font-bold mt-1">{counts.autoApplied}</h3>
+                <p className="text-sm font-medium text-muted-foreground">With Profile Data</p>
+                <h3 className="text-3xl font-bold mt-1">{counts.withProfiles}</h3>
               </div>
               <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <CheckCircle className="text-green-600 dark:text-green-400" size={22} />
+                <Globe className="text-green-600 dark:text-green-400" size={22} />
               </div>
             </div>
           </CardContent>
@@ -107,11 +200,11 @@ const ApplicationTracker = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Failed Applications</p>
-                <h3 className="text-3xl font-bold mt-1">{counts.failed}</h3>
+                <p className="text-sm font-medium text-muted-foreground">LinkedIn Applications</p>
+                <h3 className="text-3xl font-bold mt-1">{counts.linkedin}</h3>
               </div>
-              <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <AlertTriangle className="text-amber-600 dark:text-amber-400" size={22} />
+              <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Linkedin className="text-blue-600 dark:text-blue-400" size={22} />
               </div>
             </div>
           </CardContent>
@@ -145,11 +238,22 @@ const ApplicationTracker = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="all">All Applications</TabsTrigger>
+            <TabsList className="mb-4 flex flex-wrap">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="with-profiles">
+                <span className="flex items-center gap-1">
+                  With Profiles
+                  <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    {counts.withProfiles}
+                  </span>
+                </span>
+              </TabsTrigger>
               <TabsTrigger value="auto">Auto-Applied</TabsTrigger>
-              <TabsTrigger value="manual">Manual Applications</TabsTrigger>
-              <TabsTrigger value="failed">Failed Applications</TabsTrigger>
+              <TabsTrigger value="product">Product Manager</TabsTrigger>
+              <TabsTrigger value="growth">Growth</TabsTrigger>
+              <TabsTrigger value="google">Google Jobs</TabsTrigger>
+              <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
+              <TabsTrigger value="failed">Failed</TabsTrigger>
             </TabsList>
             
             <TabsContent value={activeTab} className="mt-0">
@@ -171,7 +275,7 @@ const ApplicationTracker = () => {
                   <p className="text-muted-foreground">
                     {searchTerm 
                       ? "No applications match your search criteria" 
-                      : "Start applying to jobs to see your applications here"}
+                      : "Upload your CV and start applying to jobs to see them here"}
                   </p>
                 </div>
               )}

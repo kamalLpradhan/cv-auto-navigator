@@ -1,5 +1,4 @@
-
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -7,7 +6,11 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { FileUp, X, File, CheckCircle } from 'lucide-react';
 
-const CVUploader = () => {
+interface CVUploaderProps {
+  onUploadComplete?: () => void;
+}
+
+const CVUploader = ({ onUploadComplete }: CVUploaderProps = {}) => {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -15,6 +18,13 @@ const CVUploader = () => {
   const [isUploaded, setIsUploaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const cv = localStorage.getItem('cv');
+    if (cv) {
+      setIsUploaded(true);
+    }
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -36,7 +46,6 @@ const CVUploader = () => {
       return false;
     }
     
-    // 10MB max size
     if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "File too large",
@@ -77,7 +86,6 @@ const CVUploader = () => {
     setIsUploading(true);
     setUploadProgress(0);
     
-    // Simulate upload progress
     const interval = setInterval(() => {
       setUploadProgress(prev => {
         if (prev >= 100) {
@@ -88,14 +96,12 @@ const CVUploader = () => {
       });
     }, 150);
     
-    // Simulate API call
     setTimeout(() => {
       clearInterval(interval);
       setUploadProgress(100);
       setIsUploaded(true);
       setIsUploading(false);
       
-      // Save to localStorage for demo purposes
       localStorage.setItem('cv', JSON.stringify({
         name: file.name,
         type: file.type,
@@ -108,6 +114,10 @@ const CVUploader = () => {
         title: "CV Uploaded Successfully",
         description: "Your CV is now ready for automatic applications",
       });
+      
+      if (onUploadComplete) {
+        onUploadComplete();
+      }
     }, 3000);
   };
   
@@ -131,7 +141,7 @@ const CVUploader = () => {
     <div className="w-full max-w-md mx-auto">
       <Card className="glass-panel overflow-hidden transition-all duration-300">
         <CardContent className="p-6">
-          {!file ? (
+          {!file && !isUploaded ? (
             <div 
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -195,9 +205,9 @@ const CVUploader = () => {
                   </div>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{file.name}</p>
+                  <p className="text-sm font-medium truncate">{file ? file.name : "CV Uploaded"}</p>
                   <p className="text-xs text-muted-foreground">
-                    {getFileSize(file.size)}
+                    {file ? getFileSize(file.size) : "Ready for applications"}
                   </p>
                 </div>
               </div>
