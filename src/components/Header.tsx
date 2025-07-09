@@ -11,16 +11,12 @@ import {
   X 
 } from "lucide-react";
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ThemeToggle } from './ThemeToggle';
-import ProfileDropdown from './ProfileDropdown';
-import { useAuth } from '@/providers/AuthProvider';
 
 const Header = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { isAuthenticated } = useAuth();
   
   // Handle scroll effect
   useEffect(() => {
@@ -53,19 +49,15 @@ const Header = () => {
         
         {isMobile ? (
           <>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              {isAuthenticated && <ProfileDropdown />}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="relative z-50"
-                aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-              >
-                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </Button>
-            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="relative z-50"
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </Button>
             
             {/* Mobile Menu */}
             <div 
@@ -114,50 +106,44 @@ const Header = () => {
             </div>
           </>
         ) : (
-          <div className="flex items-center">
-            <nav className="flex items-center space-x-1 mr-4">
-              <NavLink 
-                to="/" 
-                className={({ isActive }) => `flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                  isActive ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                }`}
-              >
-                <Home className="mr-2" size={18} />
-                Home
-              </NavLink>
-              <NavLink 
-                to="/upload" 
-                className={({ isActive }) => `flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                  isActive ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                }`}
-              >
-                <FileUp className="mr-2" size={18} />
-                Upload CV
-              </NavLink>
-              <NavLink 
-                to="/apply" 
-                className={({ isActive }) => `flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                  isActive ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                }`}
-              >
-                <Search className="mr-2" size={18} />
-                Jobs
-              </NavLink>
-              <NavLink 
-                to="/dashboard" 
-                className={({ isActive }) => `flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                  isActive ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                }`}
-              >
-                <ListChecks className="mr-2" size={18} />
-                Applications
-              </NavLink>
-            </nav>
-            <div className="flex items-center space-x-2">
-              <ThemeToggle />
-              {isAuthenticated && <ProfileDropdown />}
-            </div>
-          </div>
+          <nav className="flex items-center space-x-1">
+            <NavLink 
+              to="/" 
+              className={({ isActive }) => `flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                isActive ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              <Home className="mr-2" size={18} />
+              Home
+            </NavLink>
+            <NavLink 
+              to="/upload" 
+              className={({ isActive }) => `flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                isActive ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              <FileUp className="mr-2" size={18} />
+              Upload CV
+            </NavLink>
+            <NavLink 
+              to="/apply" 
+              className={({ isActive }) => `flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                isActive ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              <Search className="mr-2" size={18} />
+              Jobs
+            </NavLink>
+            <NavLink 
+              to="/dashboard" 
+              className={({ isActive }) => `flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                isActive ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              <ListChecks className="mr-2" size={18} />
+              Applications
+            </NavLink>
+          </nav>
         )}
       </div>
     </header>
