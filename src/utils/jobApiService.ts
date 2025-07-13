@@ -177,7 +177,7 @@ const MOCK_JOBS: JobListing[] = [
 ];
 
 export class JobApiService {
-  private static readonly JSEARCH_API_KEY = process.env.JSEARCH_API_KEY || '';
+  private static readonly JSEARCH_API_KEY = ''; // API key would need to be configured
   private static readonly JSEARCH_BASE_URL = 'https://jsearch.p.rapidapi.com';
 
   static async searchJobs(params: JobSearchParams): Promise<JobListing[]> {
