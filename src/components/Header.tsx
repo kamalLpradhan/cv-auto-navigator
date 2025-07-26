@@ -7,6 +7,7 @@ import {
   FileUp, 
   Search, 
   ListChecks, 
+  CreditCard,
   Menu, 
   X 
 } from "lucide-react";
@@ -110,6 +111,15 @@ const Header = () => {
                   <ListChecks className="mb-1" size={24} />
                   Applications
                 </NavLink>
+                <NavLink 
+                  to="/pricing" 
+                  className={({ isActive }) => `flex flex-col items-center text-lg font-medium transition-colors duration-200 ${
+                    isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <CreditCard className="mb-1" size={24} />
+                  Pricing
+                </NavLink>
               </div>
             </div>
           </>
@@ -151,6 +161,15 @@ const Header = () => {
               >
                 <ListChecks className="mr-2" size={18} />
                 Applications
+              </NavLink>
+              <NavLink 
+                to="/pricing" 
+                className={({ isActive }) => `flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  isActive ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                <CreditCard className="mr-2" size={18} />
+                Pricing
               </NavLink>
             </nav>
             <div className="flex items-center space-x-2">
