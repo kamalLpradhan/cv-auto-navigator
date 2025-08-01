@@ -173,6 +173,118 @@ const MOCK_JOBS: JobListing[] = [
     benefits: ["Health Insurance", "Research Time", "Conference Attendance", "Stock Options"],
     companySize: "200-500 employees",
     industry: "Analytics"
+  },
+  {
+    id: "job-6",
+    title: "Sales Manager",
+    company: "TechSales India",
+    location: "Pune, India",
+    description: "Join our dynamic sales team as a Sales Manager in Pune. You'll lead a team of sales representatives, develop sales strategies, and drive revenue growth in the Indian market. We're looking for someone with proven sales experience and strong leadership skills.",
+    requirements: [
+      "5+ years of sales experience",
+      "Team management experience",
+      "Strong communication skills",
+      "Experience in B2B sales",
+      "Understanding of Indian market"
+    ],
+    salary: {
+      min: 800000,
+      max: 1500000,
+      currency: "INR",
+      period: "yearly"
+    },
+    type: "Full-time",
+    postedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    applyUrl: "https://techsalesindia.com/careers/sales-manager",
+    source: "TechSales India Careers",
+    skills: ["Sales", "Team Management", "B2B Sales", "CRM", "Leadership", "Negotiation"],
+    benefits: ["Health Insurance", "Performance Bonus", "Travel Allowance", "Phone Allowance"],
+    companySize: "100-500 employees",
+    industry: "Technology Sales"
+  },
+  {
+    id: "job-7",
+    title: "Regional Sales Manager",
+    company: "GlobalCorp",
+    location: "Mumbai, India",
+    description: "We are seeking an experienced Regional Sales Manager to oversee our sales operations across western India. You will be responsible for achieving sales targets, managing key accounts, and developing new business opportunities.",
+    requirements: [
+      "7+ years of sales management experience",
+      "Proven track record of achieving targets",
+      "Experience with enterprise sales",
+      "MBA preferred",
+      "Fluency in Hindi and English"
+    ],
+    salary: {
+      min: 1200000,
+      max: 2000000,
+      currency: "INR",
+      period: "yearly"
+    },
+    type: "Full-time",
+    postedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    applyUrl: "https://globalcorp.com/jobs/regional-sales-manager",
+    source: "GlobalCorp Careers",
+    skills: ["Enterprise Sales", "Account Management", "Business Development", "Team Leadership"],
+    benefits: ["Health Insurance", "Variable Pay", "Car Allowance", "Stock Options"],
+    companySize: "1000+ employees",
+    industry: "Enterprise Software"
+  },
+  {
+    id: "job-8",
+    title: "Inside Sales Manager",
+    company: "StartupIndia",
+    location: "Pune, India",
+    description: "Looking for a dynamic Inside Sales Manager to lead our inside sales team. You'll be responsible for driving sales through phone and digital channels, managing the sales pipeline, and coaching team members to achieve targets.",
+    requirements: [
+      "4+ years of inside sales experience",
+      "Experience with sales automation tools",
+      "Strong analytical skills",
+      "Team leadership experience",
+      "Experience with SaaS products"
+    ],
+    salary: {
+      min: 600000,
+      max: 1000000,
+      currency: "INR",
+      period: "yearly"
+    },
+    type: "Full-time",
+    postedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    applyUrl: "https://startupindia.com/careers/inside-sales-manager",
+    source: "StartupIndia Jobs",
+    skills: ["Inside Sales", "CRM", "Sales Analytics", "Team Management", "SaaS Sales"],
+    benefits: ["Health Insurance", "Flexible Hours", "Performance Bonus", "Learning Budget"],
+    companySize: "50-200 employees",
+    industry: "SaaS"
+  },
+  {
+    id: "job-9",
+    title: "Software Engineer",
+    company: "InfoTech Solutions",
+    location: "Pune, India",
+    description: "Join our engineering team as a Software Engineer in Pune. You'll work on cutting-edge software solutions, collaborate with cross-functional teams, and contribute to our growing product portfolio.",
+    requirements: [
+      "3+ years of software development experience",
+      "Strong programming skills in Java or Python",
+      "Experience with web technologies",
+      "Knowledge of databases",
+      "Good problem-solving skills"
+    ],
+    salary: {
+      min: 600000,
+      max: 1200000,
+      currency: "INR",
+      period: "yearly"
+    },
+    type: "Full-time",
+    postedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    applyUrl: "https://infotech.com/careers/software-engineer",
+    source: "InfoTech Careers",
+    skills: ["Java", "Python", "Web Development", "SQL", "Problem Solving"],
+    benefits: ["Health Insurance", "Training Programs", "Flexible Work", "Team Outings"],
+    companySize: "200-1000 employees",
+    industry: "Information Technology"
   }
 ];
 
@@ -183,6 +295,9 @@ export class JobApiService {
   static async searchJobs(params: JobSearchParams): Promise<JobListing[]> {
     console.log('Searching jobs with params:', params);
     
+    // Simulate realistic API delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+    
     // Try JSearch API first if API key is available
     if (this.JSEARCH_API_KEY) {
       try {
@@ -192,7 +307,7 @@ export class JobApiService {
       }
     }
 
-    // Fallback to enhanced mock data with intelligent filtering
+    // Enhanced mock data search with realistic results
     return this.searchMockJobs(params);
   }
 
