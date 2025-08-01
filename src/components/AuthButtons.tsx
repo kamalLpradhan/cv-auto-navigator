@@ -1,5 +1,5 @@
 
-import { Github, Mail, Twitter } from "lucide-react";
+import { Github, Mail, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -69,12 +69,12 @@ export const AuthButtons = () => {
       </Button>
       
       <Button 
-        onClick={() => handleSocialSignIn("X")}
+        onClick={() => handleSocialSignIn("LinkedIn")}
         variant="outline" 
         className="flex items-center justify-center gap-2"
       >
-        <Twitter className="h-5 w-5" />
-        Continue with X
+        <Linkedin className="h-5 w-5" />
+        Continue with LinkedIn
       </Button>
       
       <div className="relative my-3">
