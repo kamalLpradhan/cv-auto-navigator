@@ -1,3 +1,5 @@
+import { parseSalaryFromText, convertSalaryToINR, type Salary } from './currencyUtils';
+
 const GOOGLE_API_KEY = 'AIzaSyCWiVxC_QLRNUIq6STBHBvbnelnMiD0IMM';
 const DEFAULT_SEARCH_ENGINE_ID = '51ad170dce0d9478c'; // Updated with your search engine ID
 
@@ -167,15 +169,28 @@ const extractJobData = (item: any, location: string) => {
   const metatags = pagemap.metatags?.[0] || {};
   const jobposting = pagemap.jobposting?.[0] || {};
   
-  // Extract salary information
-  let salary = undefined;
+  // Extract salary information and convert to INR
+  let salary: Salary | undefined = undefined;
+  
+  // First try to get from structured data
   if (jobposting.basesalary || jobposting.salaryCurrency) {
     salary = {
       min: jobposting.basesalary ? parseInt(jobposting.basesalary) : undefined,
       max: undefined,
       currency: jobposting.salaryCurrency || 'USD',
-      period: 'yearly'
+      period: 'yearly' as const
     };
+  }
+  
+  // If no structured salary data, try to parse from description
+  const description = item.snippet || metatags['og:description'] || '';
+  if (!salary) {
+    salary = parseSalaryFromText(description);
+  }
+  
+  // Convert salary to INR
+  if (salary) {
+    salary = convertSalaryToINR(salary) || salary;
   }
   
   // Extract company information
@@ -192,10 +207,10 @@ const extractJobData = (item: any, location: string) => {
                     metatags['article:published_time'] || 
                     new Date().toISOString();
   
-  // Extract skills and requirements from description
-  const description = item.snippet || metatags['og:description'] || '';
-  const skills = extractSkillsFromDescription(description);
-  const requirements = extractRequirementsFromDescription(description);
+  // Extract skills and requirements from job text
+  const jobDescription = item.snippet || metatags['og:description'] || '';
+  const skills = extractSkillsFromDescription(jobDescription);
+  const requirements = extractRequirementsFromDescription(jobDescription);
   
   return {
     id: Math.random().toString(36).substr(2, 9),
@@ -203,7 +218,7 @@ const extractJobData = (item: any, location: string) => {
     company: company,
     location: jobposting.jobLocation || location || 'Location not specified',
     type: jobType,
-    description: description,
+    description: jobDescription,
     requirements: requirements,
     skills: skills,
     salary: salary,
@@ -211,7 +226,7 @@ const extractJobData = (item: any, location: string) => {
     canAutoApply: true,
     source: 'Google Search',
     applyUrl: item.link,
-    industry: jobposting.industry || extractIndustryFromDescription(description)
+    industry: jobposting.industry || extractIndustryFromDescription(jobDescription)
   };
 };
 
@@ -269,7 +284,8 @@ export const searchJobs = async (
   query: string, 
   location: string = '', 
   searchEngineId: string = DEFAULT_SEARCH_ENGINE_ID,
-  filters: SearchFilters = {}
+  filters: SearchFilters = {},
+  maxResults: number = 25
 ): Promise<any[]> => {
   try {
     // Clean and validate the search engine ID
@@ -277,6 +293,7 @@ export const searchJobs = async (
     const finalSearchEngineId = cleanedId || DEFAULT_SEARCH_ENGINE_ID;
     
     console.log('Using Search Engine ID:', finalSearchEngineId);
+    console.log('Fetching up to', maxResults, 'jobs');
     
     if (!finalSearchEngineId) {
       throw new Error('Search Engine ID is required. Please configure your Google Custom Search Engine ID.');
@@ -285,45 +302,84 @@ export const searchJobs = async (
     // Build structured search query
     const structuredQuery = buildStructuredQuery(query, location, filters);
     
-    // Target specific job sites if no industry filter is specified
-    let siteRestriction = '';
-    if (!filters.industry) {
-      const jobSites = Object.values(JOB_SITE_DOMAINS).slice(0, 3); // Limit to top 3 sites
-      siteRestriction = ` (${jobSites.map(site => `site:${site}`).join(' OR ')})`;
-    }
+    // We'll make multiple API calls to get at least 25 results
+    const resultsPerPage = 10; // Google Custom Search API max per request
+    const numPages = Math.ceil(maxResults / resultsPerPage);
+    const allJobs: any[] = [];
     
-    const searchQuery = structuredQuery + siteRestriction;
-    const apiUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${finalSearchEngineId}&q=${encodeURIComponent(searchQuery)}&num=10`;
+    // Try different job sites to maximize results
+    const jobSiteGroups = [
+      ['linkedin.com/jobs', 'indeed.com', 'glassdoor.com'],
+      ['monster.com', 'ziprecruiter.com', 'dice.com'],
+      ['angel.co', 'remoteok.io', 'stackoverflow.com/jobs']
+    ];
     
-    console.log('Structured search query:', searchQuery);
-    console.log('Making request to:', apiUrl);
+    for (let page = 0; page < numPages; page++) {
+      const startIndex = page * resultsPerPage + 1;
+      
+      // Rotate through different job sites for each page
+      const jobSites = jobSiteGroups[page % jobSiteGroups.length];
+      const siteRestriction = !filters.industry ? 
+        ` (${jobSites.map(site => `site:${site}`).join(' OR ')})` : '';
+      
+      const searchQuery = structuredQuery + siteRestriction;
+      const apiUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${finalSearchEngineId}&q=${encodeURIComponent(searchQuery)}&num=${resultsPerPage}&start=${startIndex}`;
+      
+      console.log(`Fetching page ${page + 1}/${numPages}:`, searchQuery);
+      
+      const response = await fetch(apiUrl);
+      const data: GoogleSearchResult = await response.json();
     
-    const response = await fetch(apiUrl);
-    const data: GoogleSearchResult = await response.json();
-    
-    // Check for API errors in the response
-    if (data.error) {
-      if (data.error.code === 400) {
-        if (data.error.message.includes('invalid argument') || data.error.message.includes('Invalid Value')) {
-          throw new Error('Invalid Google Custom Search Engine ID. Please check your configuration or set up a new Custom Search Engine at https://cse.google.com/');
+      // Check for API errors in the response
+      if (data.error) {
+        if (data.error.code === 400) {
+          if (data.error.message.includes('invalid argument') || data.error.message.includes('Invalid Value')) {
+            throw new Error('Invalid Google Custom Search Engine ID. Please check your configuration or set up a new Custom Search Engine at https://cse.google.com/');
+          }
         }
+        console.error(`Google API Error on page ${page + 1}:`, data.error.message);
+        // Continue to next page even if one fails
+        continue;
       }
-      throw new Error(`Google API Error: ${data.error.message}`);
-    }
 
-    if (!response.ok) {
-      throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+      if (!response.ok) {
+        console.error(`HTTP Error on page ${page + 1}: ${response.status} - ${response.statusText}`);
+        // Continue to next page even if one fails
+        continue;
+      }
+      
+      // Process results with enhanced data extraction
+      const pageJobs = (data.items || []).map(item => extractJobData(item, location));
+      allJobs.push(...pageJobs);
+      
+      // If we have enough jobs, stop fetching
+      if (allJobs.length >= maxResults) {
+        break;
+      }
     }
     
-    // Process results with enhanced data extraction
-    const jobs = (data.items || []).map(item => extractJobData(item, location));
+    // Filter, deduplicate and sort results
+    const uniqueJobs = Array.from(
+      new Map(allJobs.map(job => [`${job.title}-${job.company}`.toLowerCase(), job])).values()
+    );
     
-    // Filter and sort results
-    return jobs
-      .filter(job => job.title.toLowerCase().includes('job') || 
-                    job.description.toLowerCase().includes('hiring') ||
-                    job.description.toLowerCase().includes('position'))
-      .sort((a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime());
+    return uniqueJobs
+      .filter(job => 
+        job.title.toLowerCase().includes('job') || 
+        job.title.toLowerCase().includes('manager') ||
+        job.title.toLowerCase().includes('developer') ||
+        job.title.toLowerCase().includes('engineer') ||
+        job.title.toLowerCase().includes('analyst') ||
+        job.title.toLowerCase().includes('designer') ||
+        job.title.toLowerCase().includes('specialist') ||
+        job.title.toLowerCase().includes('lead') ||
+        job.title.toLowerCase().includes('director') ||
+        job.description.toLowerCase().includes('hiring') ||
+        job.description.toLowerCase().includes('position') ||
+        job.description.toLowerCase().includes('opportunity')
+      )
+      .sort((a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime())
+      .slice(0, maxResults); // Ensure we don't exceed the requested limit
     
   } catch (error) {
     console.error('Google search error:', error);

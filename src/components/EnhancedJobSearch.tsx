@@ -27,6 +27,7 @@ import { applyToJob } from '@/utils/applicationService';
 import { debounce } from 'lodash';
 import { useRealtimeJobSearch } from '@/hooks/useRealtimeJobSearch';
 import RealtimeStatus from './RealtimeStatus';
+import { formatSalaryINR, convertSalaryToINR } from '@/utils/currencyUtils';
 
 interface JobListing {
   id: string;
@@ -39,7 +40,7 @@ interface JobListing {
     min?: number;
     max?: number;
     currency: string;
-    period: string;
+    period: 'hourly' | 'monthly' | 'yearly' | 'weekly';
   };
   type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'Remote';
   postedDate: string;
@@ -121,12 +122,9 @@ const EnhancedJobSearch = () => {
   };
 
   const formatSalary = (salary: JobListing['salary']) => {
-    if (!salary) return null;
-    const { min, max, currency, period } = salary;
-    if (min && max) {
-      return `${currency} ${min.toLocaleString()} - ${max.toLocaleString()} per ${period}`;
-    }
-    return null;
+    // Convert to INR and format using the utility
+    const convertedSalary = convertSalaryToINR(salary);
+    return formatSalaryINR(convertedSalary);
   };
 
   const formatDate = (dateString: string) => {
@@ -332,7 +330,7 @@ const EnhancedJobSearch = () => {
                         {formatDate(job.postedDate)}
                       </span>
                       {job.salary && (
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
                           <DollarSign className="h-3 w-3" />
                           {formatSalary(job.salary)}
                         </span>

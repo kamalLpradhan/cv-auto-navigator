@@ -11,6 +11,7 @@ import { debounce } from 'lodash';
 import { searchJobs } from '@/utils/googleSearchService';
 import { analyzeCVJobMatch } from '@/utils/cvAnalysisService';
 import { useAuth } from '@/providers/AuthProvider';
+import { formatSalaryINR, type Salary } from '@/utils/currencyUtils';
 
 interface Job {
   id: string;
@@ -26,6 +27,7 @@ interface Job {
   source?: string;
   sourceId?: string;
   applyUrl?: string;
+  salary?: Salary;
   geminiAnalysis?: string;
   cvMatchAnalysis?: {
     matchPercentage: number;
@@ -273,7 +275,8 @@ Current ID: ${searchEngineId}`;
     setIsSearching(true);
     setShowSearchError(false);
     try {
-      const searchResults = await searchJobs(term, loc, searchEngineId);
+      // Fetch at least 25 jobs
+      const searchResults = await searchJobs(term, loc, searchEngineId, {}, 25);
       setSearchResults(searchResults);
       
       if (searchResults.length === 0) {
@@ -282,11 +285,19 @@ Current ID: ${searchEngineId}`;
           description: "Try adjusting your search criteria",
           variant: "default",
         });
-      } else if (autoAnalyzeCV && geminiApiKey && localStorage.getItem('cv')) {
-        // Auto-analyze CV match for first 3 jobs
-        searchResults.slice(0, 3).forEach(job => {
-          setTimeout(() => analyzeCVMatch(job), Math.random() * 2000);
+      } else {
+        toast({
+          title: "Jobs Found",
+          description: `Found ${searchResults.length} jobs matching your criteria. All salaries displayed in INR.`,
+          variant: "default",
         });
+        
+        if (autoAnalyzeCV && geminiApiKey && localStorage.getItem('cv')) {
+          // Auto-analyze CV match for first 3 jobs
+          searchResults.slice(0, 3).forEach(job => {
+            setTimeout(() => analyzeCVMatch(job), Math.random() * 2000);
+          });
+        }
       }
     } catch (error) {
       console.error("Search error:", error);
@@ -498,6 +509,14 @@ Current ID: ${searchEngineId}`;
                         <span className="w-1 h-1 rounded-full bg-muted-foreground"></span>
                         <Clock size={15} />
                         <span>{formatDate(job.postedDate)}</span>
+                        {job.salary && (
+                          <>
+                            <span className="w-1 h-1 rounded-full bg-muted-foreground"></span>
+                            <span className="text-green-600 dark:text-green-400 font-medium">
+                              {formatSalaryINR(job.salary)}
+                            </span>
+                          </>
+                        )}
                       </div>
                       
                       <h3 className="text-xl font-medium mb-3">{job.title}</h3>
