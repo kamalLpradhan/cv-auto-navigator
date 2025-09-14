@@ -93,14 +93,17 @@ const EnhancedJobSearch = () => {
     setApplyingJobs(prev => new Set([...prev, job.id]));
     
     try {
-      await applyToJob({
+      // Create a properly typed job object for the application service
+      const jobData = {
         id: job.id,
         title: job.title,
         company: job.company,
         location: job.location,
         source: job.source,
         applyUrl: job.applyUrl
-      });
+      };
+      
+      await applyToJob(jobData);
       
       toast({
         title: "Application Submitted",
@@ -122,8 +125,16 @@ const EnhancedJobSearch = () => {
   };
 
   const formatSalary = (salary: JobListing['salary']) => {
+    if (!salary) return 'Salary not disclosed';
+    
+    // Ensure period is properly typed
+    const typedSalary = {
+      ...salary,
+      period: salary.period as 'hourly' | 'monthly' | 'yearly' | 'weekly'
+    };
+    
     // Convert to INR and format using the utility
-    const convertedSalary = convertSalaryToINR(salary);
+    const convertedSalary = convertSalaryToINR(typedSalary);
     return formatSalaryINR(convertedSalary);
   };
 

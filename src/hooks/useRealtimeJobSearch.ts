@@ -14,7 +14,7 @@ interface JobListing {
     min?: number;
     max?: number;
     currency: string;
-    period: string;
+    period: 'hourly' | 'monthly' | 'yearly' | 'weekly';
   };
   type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'Remote';
   postedDate: string;
