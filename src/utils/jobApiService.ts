@@ -1,5 +1,5 @@
 
-interface JobListing {
+export interface JobListing {
   id: string;
   title: string;
   company: string;
@@ -12,7 +12,7 @@ interface JobListing {
     currency: string;
     period: 'hourly' | 'monthly' | 'yearly' | 'weekly';
   };
-  type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'Remote';
+  type: 'full_time' | 'part_time' | 'contract' | 'internship' | 'temporary';
   postedDate: string;
   applyUrl: string;
   source: string;
@@ -23,7 +23,7 @@ interface JobListing {
   industry?: string;
 }
 
-interface JobSearchParams {
+export interface JobSearchParams {
   query: string;
   location?: string;
   jobType?: string;
