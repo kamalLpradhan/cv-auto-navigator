@@ -1,31 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { JobApiService } from '@/utils/jobApiService';
+import { JobApiService, type JobListing } from '@/utils/jobApiService';
 import { useToast } from '@/hooks/use-toast';
-
-interface JobListing {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
-  description: string;
-  requirements: string[];
-  salary?: {
-    min?: number;
-    max?: number;
-    currency: string;
-    period: 'hourly' | 'monthly' | 'yearly' | 'weekly';
-  };
-  type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'Remote';
-  postedDate: string;
-  applyUrl: string;
-  source: string;
-  skills: string[];
-  benefits?: string[];
-  companyLogo?: string;
-  companySize?: string;
-  industry?: string;
-}
 
 interface UseRealtimeJobSearchParams {
   query: string;

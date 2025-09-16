@@ -28,30 +28,7 @@ import { debounce } from 'lodash';
 import { useRealtimeJobSearch } from '@/hooks/useRealtimeJobSearch';
 import RealtimeStatus from './RealtimeStatus';
 import { formatSalaryINR, convertSalaryToINR } from '@/utils/currencyUtils';
-
-interface JobListing {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
-  description: string;
-  requirements: string[];
-  salary?: {
-    min?: number;
-    max?: number;
-    currency: string;
-    period: 'hourly' | 'monthly' | 'yearly' | 'weekly';
-  };
-  type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'Remote';
-  postedDate: string;
-  applyUrl: string;
-  source: string;
-  skills: string[];
-  benefits?: string[];
-  companyLogo?: string;
-  companySize?: string;
-  industry?: string;
-}
+import type { JobListing } from '@/utils/jobApiService';
 
 const EnhancedJobSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
