@@ -30,6 +30,8 @@ export interface JobSearchParams {
   salaryMin?: number;
   experienceLevel?: string;
   remote?: boolean;
+  maxResults?: number;
+  strictTitleMatch?: boolean;
 }
 
 // Mock job data for demonstration and fallback - Comprehensive job types
@@ -491,20 +493,96 @@ export class JobApiService {
   static async searchJobs(params: JobSearchParams): Promise<JobListing[]> {
     console.log('Searching jobs with params:', params);
     
+    const { maxResults = 50, strictTitleMatch = false } = params;
+    
     // Simulate realistic API delay for better UX
     await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
     
     // Try JSearch API first if API key is available
     if (this.JSEARCH_API_KEY) {
       try {
-        return await this.searchWithJSearchAPI(params);
+        const results = await this.searchWithJSearchAPI(params);
+        return this.filterAndSortResults(results, params, maxResults);
       } catch (error) {
         console.error('JSearch API failed, falling back to mock data:', error);
       }
     }
 
     // Enhanced mock data search with realistic results
-    return this.searchMockJobs(params);
+    const results = this.searchMockJobs(params);
+    return this.filterAndSortResults(results, params, maxResults);
+  }
+
+  private static filterAndSortResults(
+    jobs: JobListing[], 
+    params: JobSearchParams, 
+    maxResults: number
+  ): JobListing[] {
+    let filtered = [...jobs];
+    
+    // Apply strict title matching if requested
+    if (params.strictTitleMatch && params.query) {
+      const queryWords = params.query.toLowerCase().split(/\s+/);
+      filtered = filtered.filter(job => {
+        const titleLower = job.title.toLowerCase();
+        return queryWords.every(word => titleLower.includes(word));
+      });
+    }
+    
+    // Sort by relevance score
+    if (params.query) {
+      filtered = this.sortByRelevance(filtered, params.query);
+    }
+    
+    // Limit results
+    return filtered.slice(0, maxResults);
+  }
+
+  private static sortByRelevance(jobs: JobListing[], query: string): JobListing[] {
+    const queryLower = query.toLowerCase();
+    const queryWords = queryLower.split(/\s+/);
+    
+    return jobs.sort((a, b) => {
+      // Calculate relevance scores
+      const scoreA = this.calculateRelevanceScore(a, queryWords);
+      const scoreB = this.calculateRelevanceScore(b, queryWords);
+      
+      // Higher score first
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      
+      // Then by date
+      return new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime();
+    });
+  }
+
+  private static calculateRelevanceScore(job: JobListing, queryWords: string[]): number {
+    let score = 0;
+    const titleLower = job.title.toLowerCase();
+    const descLower = job.description.toLowerCase();
+    
+    queryWords.forEach(word => {
+      // Exact title match: highest score
+      if (titleLower === word) score += 100;
+      // Title contains word: high score
+      else if (titleLower.includes(word)) score += 50;
+      
+      // Skills match: medium score
+      if (job.skills.some(skill => skill.toLowerCase().includes(word))) score += 30;
+      
+      // Description contains: lower score
+      if (descLower.includes(word)) score += 10;
+      
+      // Company name match
+      if (job.company.toLowerCase().includes(word)) score += 20;
+    });
+    
+    // Boost for recent jobs
+    const daysOld = (Date.now() - new Date(job.postedDate).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysOld < 1) score += 25;
+    else if (daysOld < 3) score += 15;
+    else if (daysOld < 7) score += 10;
+    
+    return score;
   }
 
   private static async searchWithJSearchAPI(params: JobSearchParams): Promise<JobListing[]> {
@@ -579,20 +657,31 @@ export class JobApiService {
   }
 
   private static searchMockJobs(params: JobSearchParams): JobListing[] {
-    const { query, location, jobType, salaryMin, remote } = params;
+    const { query, location, jobType, salaryMin, remote, strictTitleMatch } = params;
     
     let filteredJobs = [...MOCK_JOBS];
 
-    // Filter by query (title, company, skills, description)
+    // Filter by query with optional strict title matching
     if (query) {
       const queryLower = query.toLowerCase();
-      filteredJobs = filteredJobs.filter(job => 
-        job.title.toLowerCase().includes(queryLower) ||
-        job.company.toLowerCase().includes(queryLower) ||
-        job.skills.some(skill => skill.toLowerCase().includes(queryLower)) ||
-        job.description.toLowerCase().includes(queryLower) ||
-        job.industry?.toLowerCase().includes(queryLower)
-      );
+      const queryWords = queryLower.split(/\s+/);
+      
+      if (strictTitleMatch) {
+        // Strict: all query words must be in the title
+        filteredJobs = filteredJobs.filter(job => {
+          const titleLower = job.title.toLowerCase();
+          return queryWords.every(word => titleLower.includes(word));
+        });
+      } else {
+        // Normal: match in title, company, skills, or description
+        filteredJobs = filteredJobs.filter(job => 
+          job.title.toLowerCase().includes(queryLower) ||
+          job.company.toLowerCase().includes(queryLower) ||
+          job.skills.some(skill => skill.toLowerCase().includes(queryLower)) ||
+          job.description.toLowerCase().includes(queryLower) ||
+          job.industry?.toLowerCase().includes(queryLower)
+        );
+      }
     }
 
     // Filter by location

@@ -5,41 +5,52 @@ export const applyToJob = async (job: any): Promise<void> => {
   // Get existing applications
   const existingApplications = JSON.parse(localStorage.getItem('applications') || '[]');
   
+  // Check if already applied to prevent duplicates
+  const alreadyApplied = existingApplications.some((app: Application) => 
+    app.jobId === job.id || 
+    (app.jobTitle === job.title && app.company === job.company)
+  );
+  
+  if (alreadyApplied) {
+    throw new Error('You have already applied to this position');
+  }
+  
   // Get user profile information
   const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
   
-  // Create new application with better data structure and user profile info
+  // Create new application with real-time tracking
   const newApplication: Application = {
-    id: Math.random().toString(36).substring(2, 15),
-    jobId: job.id,
+    id: `app_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+    jobId: job.id || `job_${Date.now()}`,
     jobTitle: job.title,
     company: job.company,
     position: job.title,
     appliedDate: new Date().toISOString(),
     status: 'Applied',
-    autoApplied: true,
-    source: job.source || 'Job Search',
+    autoApplied: false,
+    source: job.source || 'Enhanced Job Search',
     sourceId: job.sourceId || job.id,
     contactEmail: job.contactEmail,
     contactName: job.contactName,
     contactLinkedIn: job.contactLinkedIn,
-    // Add user profile information to the application
+    // Add user profile information for tracking
     userLinkedIn: userProfile.linkedinProfile,
     userGithub: userProfile.githubProfile,
     userPortfolio: userProfile.portfolioWebsite,
     userTwitter: userProfile.twitterProfile,
     userIndeed: userProfile.indeedProfile,
     userGlassdoor: userProfile.glassdoorProfile,
-    appliedVia: determineApplicationSource(job, userProfile)
+    appliedVia: determineApplicationSource(job, userProfile),
+    message: `Applied to ${job.title} at ${job.company} on ${new Date().toLocaleDateString()}`
   };
   
-  // Add to existing applications
-  const updatedApplications = [...existingApplications, newApplication];
+  // Add to existing applications (newest first for real-time visibility)
+  const updatedApplications = [newApplication, ...existingApplications];
   
   // Save to localStorage
   localStorage.setItem('applications', JSON.stringify(updatedApplications));
   
-  // Trigger multiple events to ensure all components update
+  // Trigger multiple events to ensure all components update in real-time
   const applicationAddedEvent = new CustomEvent('applicationAdded', {
     detail: newApplication
   });
@@ -51,18 +62,18 @@ export const applyToJob = async (job: any): Promise<void> => {
     url: window.location.href
   });
   
-  // Dispatch both events
+  // Dispatch both events for real-time updates
   window.dispatchEvent(applicationAddedEvent);
   window.dispatchEvent(storageUpdateEvent);
   
-  // Also trigger a custom refresh event
+  // Also trigger a custom refresh event for real-time dashboard
   const refreshEvent = new CustomEvent('applicationsRefresh');
   window.dispatchEvent(refreshEvent);
   
-  console.log('Application added successfully with profile info:', newApplication);
+  console.log('Real-time application added:', newApplication);
   
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+  // Quick response for better UX
+  await new Promise(resolve => setTimeout(resolve, 200));
 };
 
 // Helper function to determine which profile was used for application

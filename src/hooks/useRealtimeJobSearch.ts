@@ -8,13 +8,17 @@ interface UseRealtimeJobSearchParams {
   location?: string;
   autoRefresh?: boolean;
   refreshInterval?: number;
+  maxResults?: number;
+  strictTitleMatch?: boolean;
 }
 
 export const useRealtimeJobSearch = ({
   query,
   location,
   autoRefresh = true,
-  refreshInterval = 300000 // 5 minutes
+  refreshInterval = 300000, // 5 minutes
+  maxResults = 100,
+  strictTitleMatch = false
 }: UseRealtimeJobSearchParams) => {
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -29,7 +33,9 @@ export const useRealtimeJobSearch = ({
     try {
       const results = await JobApiService.searchJobs({
         query,
-        location
+        location,
+        maxResults,
+        strictTitleMatch
       });
 
       const previousJobIds = jobs.map(job => job.id);

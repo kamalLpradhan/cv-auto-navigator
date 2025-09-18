@@ -41,7 +41,7 @@ const EnhancedJobSearch = () => {
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const { toast } = useToast();
 
-  // Use the real-time job search hook
+  // Use the real-time job search hook with enhanced parameters
   const { 
     jobs, 
     isSearching, 
@@ -53,7 +53,9 @@ const EnhancedJobSearch = () => {
     query: searchQuery,
     location: location || undefined,
     autoRefresh: autoRefreshEnabled,
-    refreshInterval: 300000 // 5 minutes
+    refreshInterval: 60000, // 1 minute for more real-time updates
+    maxResults: 100, // Show more results
+    strictTitleMatch: true // More accurate title matching
   });
 
   const toggleJobExpansion = (jobId: string) => {
@@ -83,14 +85,20 @@ const EnhancedJobSearch = () => {
       await applyToJob(jobData);
       
       toast({
-        title: "Application Submitted",
-        description: `Applied to ${job.title} at ${job.company}`,
+        title: "✅ Application Submitted Successfully",
+        description: `Real-time tracking enabled for ${job.title} at ${job.company}`,
       });
-    } catch (error) {
+      
+      // Trigger dashboard refresh for real-time update
+      window.dispatchEvent(new CustomEvent('applicationsRefresh'));
+    } catch (error: any) {
+      const errorMessage = error.message || "Failed to submit application. Please try again.";
       toast({
-        title: "Application Failed",
-        description: "Failed to submit application. Please try again.",
-        variant: "destructive",
+        title: "Application Status",
+        description: errorMessage.includes("already applied") 
+          ? `You've already applied to ${job.title} at ${job.company}`
+          : errorMessage,
+        variant: errorMessage.includes("already applied") ? "default" : "destructive",
       });
     } finally {
       setApplyingJobs(prev => {
