@@ -14,6 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          description: string | null
+          id: number
+          rack_id: string | null
+          resolved_at: string | null
+          server_id: string | null
+          severity: number
+          source_system: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          description?: string | null
+          id?: number
+          rack_id?: string | null
+          resolved_at?: string | null
+          server_id?: string | null
+          severity: number
+          source_system: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          description?: string | null
+          id?: number
+          rack_id?: string | null
+          resolved_at?: string | null
+          server_id?: string | null
+          severity?: number
+          source_system?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      network_health: {
+        Row: {
+          bandwidth_mbps: number
+          created_at: string
+          datacenter_location: string
+          id: number
+          latency_ms: number
+          packet_loss: number
+          port_utilization: number
+          status: string
+          switch_id: string
+          timestamp: string
+        }
+        Insert: {
+          bandwidth_mbps: number
+          created_at?: string
+          datacenter_location: string
+          id?: number
+          latency_ms: number
+          packet_loss?: number
+          port_utilization: number
+          status?: string
+          switch_id: string
+          timestamp?: string
+        }
+        Update: {
+          bandwidth_mbps?: number
+          created_at?: string
+          datacenter_location?: string
+          id?: number
+          latency_ms?: number
+          packet_loss?: number
+          port_utilization?: number
+          status?: string
+          switch_id?: string
+          timestamp?: string
+        }
+        Relationships: []
+      }
+      power_logs: {
+        Row: {
+          created_at: string
+          datacenter_location: string
+          efficiency_rating: number
+          generator_status: boolean
+          id: number
+          timestamp: string
+          total_consumption: number
+          ups_load: number
+        }
+        Insert: {
+          created_at?: string
+          datacenter_location: string
+          efficiency_rating: number
+          generator_status?: boolean
+          id?: number
+          timestamp?: string
+          total_consumption: number
+          ups_load: number
+        }
+        Update: {
+          created_at?: string
+          datacenter_location?: string
+          efficiency_rating?: number
+          generator_status?: boolean
+          id?: number
+          timestamp?: string
+          total_consumption?: number
+          ups_load?: number
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -53,6 +170,42 @@ export type Database = {
         }
         Relationships: []
       }
+      system_metrics: {
+        Row: {
+          created_at: string
+          datacenter_location: string
+          id: number
+          metric_type: string
+          rack_id: string
+          server_id: string
+          timestamp: string
+          unit: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          datacenter_location: string
+          id?: number
+          metric_type: string
+          rack_id: string
+          server_id: string
+          timestamp?: string
+          unit: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          datacenter_location?: string
+          id?: number
+          metric_type?: string
+          rack_id?: string
+          server_id?: string
+          timestamp?: string
+          unit?: string
+          value?: number
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
@@ -85,7 +238,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_demo_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
