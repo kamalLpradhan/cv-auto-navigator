@@ -47,33 +47,43 @@ export const applyToJob = async (job: any): Promise<void> => {
   // Add to existing applications (newest first for real-time visibility)
   const updatedApplications = [newApplication, ...existingApplications];
   
-  // Save to localStorage
+  // Save to localStorage FIRST
   localStorage.setItem('applications', JSON.stringify(updatedApplications));
   
-  // Trigger multiple events to ensure all components update in real-time
-  const applicationAddedEvent = new CustomEvent('applicationAdded', {
-    detail: newApplication
-  });
-  
-  const storageUpdateEvent = new StorageEvent('storage', {
+  // Force a storage event to trigger updates in other tabs/components
+  const storageEvent = new StorageEvent('storage', {
     key: 'applications',
     newValue: JSON.stringify(updatedApplications),
     oldValue: JSON.stringify(existingApplications),
-    url: window.location.href
+    url: window.location.href,
+    storageArea: localStorage
   });
   
-  // Dispatch both events for real-time updates
-  window.dispatchEvent(applicationAddedEvent);
-  window.dispatchEvent(storageUpdateEvent);
-  
-  // Also trigger a custom refresh event for real-time dashboard
-  const refreshEvent = new CustomEvent('applicationsRefresh');
-  window.dispatchEvent(refreshEvent);
-  
-  console.log('Real-time application added:', newApplication);
+  // Dispatch events with a small delay to ensure localStorage is updated
+  setTimeout(() => {
+    // Dispatch storage event for cross-tab updates
+    window.dispatchEvent(storageEvent);
+    
+    // Dispatch custom event with application details
+    const applicationAddedEvent = new CustomEvent('applicationAdded', {
+      detail: newApplication,
+      bubbles: true,
+      cancelable: true
+    });
+    window.dispatchEvent(applicationAddedEvent);
+    
+    // Trigger refresh event for dashboard components
+    const refreshEvent = new CustomEvent('applicationsRefresh', {
+      bubbles: true,
+      cancelable: true
+    });
+    window.dispatchEvent(refreshEvent);
+    
+    console.log('Real-time application added:', newApplication);
+  }, 100);
   
   // Quick response for better UX
-  await new Promise(resolve => setTimeout(resolve, 200));
+  await new Promise(resolve => setTimeout(resolve, 300));
 };
 
 // Helper function to determine which profile was used for application

@@ -51,20 +51,20 @@ const Dashboard = () => {
     
     // Listen for application updates
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'applications') {
+      if (e.key === 'applications' || !e.key) {
         console.log('Dashboard - Storage changed, reloading applications');
-        loadApplications();
+        setTimeout(loadApplications, 50);
       }
     };
     
     const handleApplicationAdded = (e: CustomEvent) => {
       console.log('Dashboard - Application added event received:', e.detail);
-      loadApplications();
+      setTimeout(loadApplications, 50);
     };
     
     const handleApplicationsRefresh = () => {
       console.log('Dashboard - Applications refresh event received');
-      loadApplications();
+      setTimeout(loadApplications, 50);
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -73,13 +73,13 @@ const Dashboard = () => {
     
     // Periodic refresh to ensure data consistency
     const refreshInterval = setInterval(() => {
-      const currentCount = applications.length;
-      const storageCount = JSON.parse(localStorage.getItem('applications') || '[]').length;
-      if (currentCount !== storageCount) {
+      const storageApplications = JSON.parse(localStorage.getItem('applications') || '[]');
+      if (applications.length !== storageApplications.length) {
         console.log('Dashboard - Application count mismatch, refreshing');
-        loadApplications();
+        setApplications(storageApplications);
+        setHasApplications(storageApplications.length > 0);
       }
-    }, 2000);
+    }, 500);
     
     // If no applications exist, add sample data
     if (!hasApplications) {
