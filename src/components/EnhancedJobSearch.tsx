@@ -32,31 +32,131 @@ import type { JobListing } from '@/utils/jobApiService';
 
 const EnhancedJobSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [location, setLocation] = useState('');
-  const [jobType, setJobType] = useState('');
+  const [selectedLocations, setSelectedLocations] = useState<string[]>(['Remote', 'United States', 'United Kingdom', 'India']);
+  const [jobType, setJobType] = useState('any');
   const [salaryMin, setSalaryMin] = useState('');
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
   const [applyingJobs, setApplyingJobs] = useState<Set<string>>(new Set());
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+  const [allJobs, setAllJobs] = useState<JobListing[]>([]);
   const { toast } = useToast();
 
-  // Use the real-time job search hook with enhanced parameters
-  const { 
-    jobs, 
-    isSearching, 
-    lastSearchTime, 
-    newJobsCount, 
-    searchJobs, 
-    markAsViewed 
-  } = useRealtimeJobSearch({
-    query: searchQuery,
-    location: location || undefined,
-    autoRefresh: autoRefreshEnabled,
-    refreshInterval: 60000, // 1 minute for more real-time updates
-    maxResults: 100, // Show more results
-    strictTitleMatch: true // More accurate title matching
-  });
+  // Fetch jobs from multiple locations
+  const [isSearching, setIsSearching] = useState(false);
+  const [lastSearchTime, setLastSearchTime] = useState<Date | null>(null);
+  const [newJobsCount, setNewJobsCount] = useState(0);
+
+  const searchJobsAllLocations = useCallback(async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    try {
+      const { JobApiService } = await import('@/utils/jobApiService');
+      
+      // Search all selected locations in parallel
+      const locationPromises = selectedLocations.map(loc => 
+        JobApiService.searchJobs({
+          query: searchQuery,
+          location: loc,
+          maxResults: 50,
+          strictTitleMatch: true
+        }).catch(err => {
+          console.error(`Error searching ${loc}:`, err);
+          return [];
+        })
+      );
+      
+      const allResults = await Promise.all(locationPromises);
+      const combinedJobs = allResults.flat();
+      
+      // Remove duplicates based on job ID
+      const uniqueJobs = Array.from(
+        new Map(combinedJobs.map(job => [job.id, job])).values()
+      );
+      
+      // Sort by posted date (newest first)
+      uniqueJobs.sort((a, b) => 
+        new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
+      );
+      
+      // Apply filters
+      let filteredJobs = uniqueJobs;
+      
+      if (jobType && jobType !== 'any') {
+        filteredJobs = filteredJobs.filter(job => 
+          job.type.toLowerCase() === jobType.toLowerCase()
+        );
+      }
+      
+      if (remoteOnly) {
+        filteredJobs = filteredJobs.filter(job => 
+          job.location.toLowerCase().includes('remote') || 
+          job.type.toLowerCase() === 'remote'
+        );
+      }
+      
+      if (salaryMin) {
+        const minSalary = parseInt(salaryMin);
+        filteredJobs = filteredJobs.filter(job => {
+          if (!job.salary) return false;
+          const salary = job.salary.min || job.salary.max || 0;
+          return salary >= minSalary;
+        });
+      }
+      
+      const previousJobIds = allJobs.map(j => j.id);
+      const newJobs = filteredJobs.filter(job => !previousJobIds.includes(job.id));
+      
+      if (newJobs.length > 0 && allJobs.length > 0) {
+        setNewJobsCount(prev => prev + newJobs.length);
+        toast({
+          title: `${newJobs.length} New Jobs Found!`,
+          description: `Updated search results across all locations`,
+        });
+      }
+      
+      setAllJobs(filteredJobs);
+      setLastSearchTime(new Date());
+    } catch (error) {
+      console.error('Multi-location search error:', error);
+      toast({
+        title: "Search Error",
+        description: "Failed to search all locations. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchQuery, selectedLocations, jobType, remoteOnly, salaryMin, allJobs, toast]);
+
+  // Auto-search when query or filters change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        searchJobsAllLocations();
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedLocations, jobType, remoteOnly, salaryMin]);
+
+  // Auto-refresh
+  useEffect(() => {
+    if (!autoRefreshEnabled || !searchQuery.trim()) return;
+
+    const interval = setInterval(() => {
+      searchJobsAllLocations();
+    }, 60000); // 1 minute
+
+    return () => clearInterval(interval);
+  }, [autoRefreshEnabled, searchJobsAllLocations, searchQuery]);
+
+  const markAsViewed = () => {
+    setNewJobsCount(0);
+  };
+
+  const jobs = allJobs;
 
   const toggleJobExpansion = (jobId: string) => {
     const newExpanded = new Set(expandedJobs);
@@ -201,17 +301,28 @@ const EnhancedJobSearch = () => {
             </div>
             
             <div>
-              <Label htmlFor="location">Location</Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-                <Input
-                  id="location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g. San Francisco, Remote"
-                  className="pl-9"
-                />
+              <Label htmlFor="location">Locations (Multiple)</Label>
+              <div className="flex flex-wrap gap-2 p-2 border rounded-md">
+                {['Remote', 'United States', 'United Kingdom', 'India', 'Canada', 'Australia', 'Germany'].map(loc => (
+                  <Badge
+                    key={loc}
+                    variant={selectedLocations.includes(loc) ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setSelectedLocations(prev => 
+                        prev.includes(loc) 
+                          ? prev.filter(l => l !== loc)
+                          : [...prev, loc]
+                      );
+                    }}
+                  >
+                    {loc}
+                  </Badge>
+                ))}
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Click to select/deselect locations. Selected: {selectedLocations.length}
+              </p>
             </div>
             
             <div>
