@@ -4,13 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
-import JobSearchWithGemini from '@/components/JobSearchWithGemini';
-import JobWebsiteTracker from '@/components/JobWebsiteTracker';
+import { Upload, FileText, CheckCircle } from 'lucide-react';
+import JobSearchHub from '@/components/JobSearchHub';
 import Header from '@/components/Header';
-import EnhancedJobSearch from '@/components/EnhancedJobSearch';
+import Footer from '@/components/Footer';
 
 const Apply = () => {
   const navigate = useNavigate();
@@ -92,99 +90,67 @@ const Apply = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-slate-50 dark:from-background dark:to-background/70">
       <Header />
       
-      <main className="flex-1 pt-20">
-        <section className="py-12">
-          <div className="container px-4 md:px-6">
-            <div className="max-w-[90rem] mx-auto">
-              <div className="space-y-3 mb-10 text-center animate-fade-in">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                  Find Your Perfect Job
-                </h1>
-                <p className="text-muted-foreground md:text-xl max-w-[700px] mx-auto">
-                  Search and apply to jobs with AI-powered matching and automatic application tracking
-                </p>
-              </div>
-
-              {/* CV Upload Section */}
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    CV Upload
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {!cvUploaded ? (
-                    <div className="space-y-4">
-                      <p className="text-muted-foreground">
-                        Upload your CV to enable AI-powered job matching and personalized recommendations
-                      </p>
-                      <div className="flex items-center gap-4">
-                        <Label htmlFor="cv-upload" className="cursor-pointer">
-                          <div className="flex items-center gap-2 px-4 py-2 border border-dashed border-border rounded-lg hover:bg-muted/50 transition-colors">
-                            <Upload className="h-4 w-4" />
-                            <span>Choose CV File</span>
-                          </div>
-                        </Label>
-                        <Input
-                          id="cv-upload"
-                          type="file"
-                          accept=".pdf,.txt,.doc,.docx"
-                          onChange={handleCVUpload}
-                          className="hidden"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                        <div>
-                          <p className="font-medium">CV Uploaded Successfully</p>
-                          <p className="text-sm text-muted-foreground">
-                            {cvData?.fileName} • Uploaded {new Date(cvData?.uploadDate).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <Button variant="outline" onClick={handleRemoveCV}>
-                        Remove CV
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Tabs defaultValue="enhanced-search" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="enhanced-search">Enhanced Search</TabsTrigger>
-                  <TabsTrigger value="gemini-search">AI-Powered Search</TabsTrigger>
-                  <TabsTrigger value="website-tracker">Website Tracker</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="enhanced-search" className="space-y-6">
-                  <EnhancedJobSearch />
-                </TabsContent>
-                
-                <TabsContent value="gemini-search" className="space-y-6">
-                  <JobSearchWithGemini />
-                </TabsContent>
-                
-                <TabsContent value="website-tracker" className="space-y-6">
-                  <JobWebsiteTracker />
-                </TabsContent>
-              </Tabs>
-            </div>
-          </div>
-        </section>
-      </main>
-      
-      <footer className="border-t py-6 md:py-8">
-        <div className="container flex flex-col items-center justify-center gap-4 px-4 md:px-6 md:flex-row">
-          <p className="text-center text-sm text-muted-foreground md:text-left">
-            &copy; {new Date().getFullYear()} CV Navigator. All rights reserved.
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="mb-8 animate-slide-up">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">Find Your Dream Job</h1>
+          <p className="text-muted-foreground">
+            Search across thousands of job listings and apply with one click
           </p>
         </div>
-      </footer>
+
+        {/* CV Upload Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              CV Upload
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!cvUploaded ? (
+              <div className="space-y-4">
+                <p className="text-muted-foreground">
+                  Upload your CV to enable personalized job matching
+                </p>
+                <div className="flex items-center gap-4">
+                  <Label htmlFor="cv-upload" className="cursor-pointer">
+                    <div className="flex items-center gap-2 px-4 py-2 border border-dashed border-border rounded-lg hover:bg-muted/50 transition-colors">
+                      <Upload className="h-4 w-4" />
+                      <span>Choose CV File</span>
+                    </div>
+                  </Label>
+                  <Input
+                    id="cv-upload"
+                    type="file"
+                    accept=".pdf,.txt,.doc,.docx"
+                    onChange={handleCVUpload}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="font-medium">CV Uploaded Successfully</p>
+                    <p className="text-sm text-muted-foreground">
+                      {cvData?.fileName} • {new Date(cvData?.uploadDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <Button variant="outline" onClick={handleRemoveCV}>
+                  Remove CV
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <JobSearchHub />
+      </main>
+      
+      <Footer />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { ArrowRight, Upload, Search, CheckCircle, Target } from "lucide-react";
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import AuthButtons from "@/components/AuthButtons";
+import LiveApplicationCounter from "@/components/LiveApplicationCounter";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -41,7 +42,11 @@ const Index = () => {
           <div className="container px-4 md:px-6 relative z-10">
             <div className="flex flex-col md:flex-row md:items-center md:gap-12">
               <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-4 mb-8 md:mb-0">
-                <div className="space-y-2">
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium animate-fade-in">
+                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    <LiveApplicationCounter />
+                  </div>
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl animate-fade-in">
                     AI-Powered CV Navigator
                   </h1>

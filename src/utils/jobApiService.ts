@@ -762,4 +762,52 @@ export class JobApiService {
       location: location
     });
   }
+
+  static async searchJobsMultipleLocations(query: string, locations: string[]): Promise<any[]> {
+    console.log(`Searching for "${query}" across ${locations.length} locations`);
+    
+    const allJobs: any[] = [];
+    const jobIds = new Set<string>();
+
+    // Search each location in parallel
+    const searchPromises = locations.map(location => 
+      this.searchJobs({ query, location, maxResults: 50 })
+    );
+
+    const results = await Promise.all(searchPromises);
+    
+    // Combine and deduplicate results
+    results.forEach(locationJobs => {
+      locationJobs.forEach(job => {
+        // Create a unique ID for deduplication
+        const uniqueId = `${job.company}-${job.title}`.toLowerCase().replace(/\s+/g, '-');
+        
+        if (!jobIds.has(uniqueId)) {
+          jobIds.add(uniqueId);
+          allJobs.push({
+            ...job,
+            id: job.id || uniqueId,
+            url: job.applyUrl,
+            redirect_url: job.applyUrl,
+            salary_min: job.salary?.min,
+            salary_max: job.salary?.max,
+            contract_type: job.type === 'full_time' ? 'Permanent' : 
+                          job.type === 'part_time' ? 'Part Time' :
+                          job.type === 'contract' ? 'Contract' : 'Temporary',
+            created: job.postedDate,
+          });
+        }
+      });
+    });
+
+    // Sort by posted date (newest first)
+    allJobs.sort((a, b) => {
+      const dateA = new Date(a.created || 0).getTime();
+      const dateB = new Date(b.created || 0).getTime();
+      return dateB - dateA;
+    });
+
+    console.log(`Found ${allJobs.length} unique jobs across all locations`);
+    return allJobs;
+  }
 }
