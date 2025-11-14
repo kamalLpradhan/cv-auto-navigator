@@ -55,7 +55,7 @@ const ProfileDropdown = () => {
           {user.name}
         </span>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 z-[100] bg-background border-border shadow-lg">
+      <DropdownMenuContent align="end" sideOffset={8} className="w-56 z-[9999] bg-popover border border-border text-popover-foreground shadow-lg">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer">
